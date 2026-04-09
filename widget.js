@@ -120,7 +120,7 @@ w.addSpacer(6);
 
 // Progress bar
 const barText = w.addText(`${bar}  ${pct}%`);
-barText.font      = Font.monospacedSystemFont(11);
+barText.font      = new Font("Menlo", 11);
 barText.textColor = new Color('#2dd4bf');
 
 w.addSpacer(8);
