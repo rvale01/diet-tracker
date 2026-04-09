@@ -1,0 +1,355 @@
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:   #4ade80;
+  --teal:    #2dd4bf;
+  --purple:  #a78bfa;
+  --pink:    #f472b6;
+  --orange:  #fb923c;
+  --bg:      #0f172a;
+  --card:    #1e293b;
+  --border:  #334155;
+  --text:    #f1f5f9;
+  --muted:   #94a3b8;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Stars ── */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.8); }
+  50%       { opacity: var(--op, 0.6); transform: scale(1); }
+}
+
+/* ── Layout ── */
+header, main, footer {
+  position: relative;
+  z-index: 1;
+}
+
+header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  background: linear-gradient(180deg, rgba(74,222,128,.08) 0%, transparent 100%);
+}
+
+.logo {
+  font-size: 4rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--green), var(--teal), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  margin: 0.5rem 0;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+main {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Cards ── */
+.day-card,
+.phrase-card,
+.progress-section,
+.weeks-section,
+.countdown-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+}
+
+/* ── Day Card ── */
+.day-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(74,222,128,.12), rgba(45,212,191,.08));
+  border-color: rgba(74,222,128,.3);
+}
+
+.day-badge {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 900;
+  color: var(--green);
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(74,222,128,.4);
+}
+.day-badge span { font-size: inherit; }
+
+.total-days {
+  font-size: 1.25rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.date-display {
+  margin-left: auto;
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ── Phrase Card ── */
+.phrase-card {
+  text-align: center;
+  background: linear-gradient(135deg, rgba(167,139,250,.1), rgba(244,114,182,.08));
+  border-color: rgba(167,139,250,.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.phrase-card::before {
+  content: '"';
+  position: absolute;
+  top: -0.5rem;
+  left: 1rem;
+  font-size: 8rem;
+  color: rgba(167,139,250,.1);
+  font-family: Georgia, serif;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.phrase-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 1rem;
+}
+
+blockquote {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.phrase-emoji {
+  font-size: 2rem;
+  margin-top: 1rem;
+}
+
+/* ── Progress ── */
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#progress-pct {
+  color: var(--teal);
+}
+
+.progress-bar-outer {
+  background: rgba(255,255,255,.06);
+  border-radius: 999px;
+  height: 1.5rem;
+  position: relative;
+  overflow: visible;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--green), var(--teal));
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  box-shadow: 0 0 20px rgba(74,222,128,.35);
+  min-width: 0;
+}
+
+.progress-bar-inner::after {
+  content: '🏃';
+  position: absolute;
+  right: -0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+}
+
+.progress-milestones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.progress-milestones span {
+  position: absolute;
+  top: 110%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--border);
+  font-weight: 600;
+}
+
+/* ── Weeks Grid ── */
+.weeks-section h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+.weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.day-dot {
+  aspect-ratio: 1;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: default;
+  transition: transform 0.15s;
+  position: relative;
+}
+
+.day-dot:hover { transform: scale(1.1); }
+
+.day-dot.done {
+  background: linear-gradient(135deg, var(--green), var(--teal));
+  color: var(--bg);
+  box-shadow: 0 2px 8px rgba(74,222,128,.3);
+}
+
+.day-dot.today {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: white;
+  box-shadow: 0 0 0 2px white, 0 0 16px rgba(167,139,250,.5);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 2px white, 0 0 16px rgba(167,139,250,.5); }
+  50%       { box-shadow: 0 0 0 3px white, 0 0 28px rgba(167,139,250,.8); }
+}
+
+.day-dot.future {
+  background: rgba(255,255,255,.04);
+  color: var(--border);
+  border: 1px solid var(--border);
+}
+
+/* ── Countdown ── */
+.countdown-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: linear-gradient(135deg, rgba(251,146,60,.1), rgba(244,114,182,.08));
+  border-color: rgba(251,146,60,.25);
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.countdown-num {
+  font-size: clamp(2.5rem, 7vw, 3.5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--orange), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.countdown-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.countdown-divider {
+  font-size: 1.5rem;
+}
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 2;
+  border-top: 1px solid var(--border);
+}
+
+.footer-tagline {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .day-card { flex-wrap: wrap; }
+  .date-display { margin-left: 0; text-align: left; }
+  .countdown-section { gap: 1rem; }
+  .weeks-grid { gap: 0.3rem; }
+}

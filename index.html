@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Diet Chronicles</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+
+  <header>
+    <div class="logo">🥦</div>
+    <h1>The Diet Chronicles</h1>
+    <p class="subtitle">6 weeks. 2 heroes. Zero excuses.</p>
+  </header>
+
+  <main>
+    <!-- Day Counter -->
+    <section class="day-card">
+      <div class="day-badge">DAY <span id="current-day">?</span></div>
+      <div class="total-days">of 42</div>
+      <div class="date-display" id="date-display"></div>
+    </section>
+
+    <!-- Daily Phrase -->
+    <section class="phrase-card">
+      <div class="phrase-label">Today's Wisdom</div>
+      <blockquote id="daily-phrase">Loading...</blockquote>
+      <div class="phrase-emoji" id="phrase-emoji">✨</div>
+    </section>
+
+    <!-- Progress Bar -->
+    <section class="progress-section">
+      <div class="progress-header">
+        <span>Progress</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progress-bar"></div>
+        <div class="progress-milestones">
+          <span style="left: 16.6%">W1</span>
+          <span style="left: 33.3%">W2</span>
+          <span style="left: 50%">W3</span>
+          <span style="left: 66.6%">W4</span>
+          <span style="left: 83.3%">W5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Week Grid -->
+    <section class="weeks-section">
+      <h2>The Journey</h2>
+      <div class="weeks-grid" id="weeks-grid"></div>
+    </section>
+
+    <!-- Countdown -->
+    <section class="countdown-section">
+      <div class="countdown-item">
+        <span class="countdown-num" id="days-done">0</span>
+        <span class="countdown-label">Days Crushed</span>
+      </div>
+      <div class="countdown-divider">⚡</div>
+      <div class="countdown-item">
+        <span class="countdown-num" id="days-left">42</span>
+        <span class="countdown-label">Days to Glory</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Started April 6, 2026 &nbsp;•&nbsp; Ends May 17, 2026</p>
+    <p class="footer-tagline">You vs. You. Every single day.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
