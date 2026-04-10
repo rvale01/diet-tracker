@@ -293,6 +293,143 @@ blockquote {
   border: 1px solid var(--border);
 }
 
+/* ── Sugar-Free Challenge ── */
+.sugar-card {
+  background: var(--card);
+  border: 1px solid rgba(251,146,60,.35);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(251,146,60,.1), rgba(234,179,8,.07));
+  position: relative;
+  overflow: hidden;
+}
+
+.sugar-card::before {
+  content: '🍭';
+  position: absolute;
+  right: -0.5rem;
+  bottom: -1rem;
+  font-size: 6rem;
+  opacity: 0.06;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+.sugar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.sugar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sugar-icon { font-size: 1.75rem; }
+
+.sugar-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 0.1rem;
+}
+
+.sugar-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sugar-badge {
+  font-size: 2.25rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--orange);
+  text-shadow: 0 0 20px rgba(251,146,60,.4);
+}
+
+.sugar-badge .sugar-of {
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* 7 large day dots */
+.sugar-dots {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sugar-dot {
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  transition: transform 0.15s;
+  position: relative;
+}
+
+.sugar-dot:hover { transform: scale(1.08); }
+
+.sugar-dot.done {
+  background: linear-gradient(135deg, #fb923c, #eab308);
+  color: var(--bg);
+  box-shadow: 0 2px 10px rgba(251,146,60,.35);
+}
+
+.sugar-dot.done::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.55rem;
+  font-weight: 900;
+  opacity: 0.7;
+}
+
+.sugar-dot.today {
+  background: linear-gradient(135deg, #fb923c, #f97316);
+  color: white;
+  box-shadow: 0 0 0 2px white, 0 0 20px rgba(251,146,60,.6);
+  animation: sugar-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sugar-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px white, 0 0 20px rgba(251,146,60,.6); }
+  50%       { box-shadow: 0 0 0 3px white, 0 0 32px rgba(251,146,60,.9); }
+}
+
+.sugar-dot.future {
+  background: rgba(255,255,255,.04);
+  color: var(--border);
+  border: 1px dashed var(--border);
+  font-size: 0.75rem;
+}
+
+.sugar-status {
+  text-align: center;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.sugar-status.done-all {
+  color: var(--orange);
+  font-weight: 700;
+  font-style: normal;
+}
+
 /* ── Countdown ── */
 .countdown-section {
   display: flex;

@@ -2,6 +2,18 @@
 const START_DATE = new Date('2026-04-06T00:00:00');
 const TOTAL_DAYS = 42;
 
+const SUGAR_START  = new Date('2026-04-06T00:00:00');
+const SUGAR_DAYS   = 7;
+const SUGAR_STATUS = [
+  "Day 1: You looked a candy bar in the eye and said no. Legendary.",
+  "Day 2: Sugar is frantically texting you. Don't reply.",
+  "Day 3: Three days! Your blood sugar is doing a little happy dance.",
+  "Day 4: Almost at the halfway point. The candy aisle has never felt so far away.",
+  "Day 5: FIVE DAYS SUGAR-FREE. You're basically a different organism at this point.",
+  "Day 6: One day left. Sugar has given up trying to reach you. Blocked.",
+  "🏆 SEVEN DAYS SUGAR-FREE! You completed the side quest. Final boss defeated.",
+];
+
 // ── Daily Phrases (42 total, one per day) ───────────────────
 const PHRASES = [
   // Week 1
@@ -86,6 +98,33 @@ function createStars() {
   }
 }
 
+// ── Sugar-Free Challenge ─────────────────────────────────────
+function buildSugarTracker() {
+  const now      = new Date();
+  const diff     = now - SUGAR_START;
+  const sugarDay = Math.min(Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1), SUGAR_DAYS);
+  const finished = sugarDay > SUGAR_DAYS;
+
+  document.getElementById('sugar-day').textContent = finished ? SUGAR_DAYS : sugarDay;
+
+  const container = document.getElementById('sugar-dots');
+  const EMOJIS = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣'];
+  for (let d = 1; d <= SUGAR_DAYS; d++) {
+    const dot = document.createElement('div');
+    dot.className = 'sugar-dot';
+    dot.textContent = EMOJIS[d - 1];
+    if (d < sugarDay || finished)    dot.classList.add('done');
+    else if (d === sugarDay)          dot.classList.add('today');
+    else                              dot.classList.add('future');
+    container.appendChild(dot);
+  }
+
+  const statusEl = document.getElementById('sugar-status');
+  const idx = Math.min(sugarDay, SUGAR_DAYS) - 1;
+  statusEl.textContent = SUGAR_STATUS[idx];
+  if (finished) statusEl.classList.add('done-all');
+}
+
 // ── Weeks Grid ───────────────────────────────────────────────
 function buildGrid(currentDay) {
   const grid = document.getElementById('weeks-grid');
@@ -131,6 +170,9 @@ function init() {
   // Countdown
   document.getElementById('days-done').textContent = day;
   document.getElementById('days-left').textContent = daysLeft;
+
+  // Sugar-Free Challenge
+  buildSugarTracker();
 
   // Grid
   buildGrid(day);
