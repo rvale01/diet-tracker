@@ -3,15 +3,20 @@ const START_DATE = new Date('2026-04-06T00:00:00');
 const TOTAL_DAYS = 42;
 
 const SUGAR_START  = new Date('2026-04-06T00:00:00');
-const SUGAR_DAYS   = 7;
+const SUGAR_DAYS   = 12;
 const SUGAR_STATUS = [
   "Day 1: You looked a candy bar in the eye and said no. Legendary.",
   "Day 2: Sugar is frantically texting you. Don't reply.",
   "Day 3: Three days! Your blood sugar is doing a little happy dance.",
   "Day 4: Almost at the halfway point. The candy aisle has never felt so far away.",
   "Day 5: FIVE DAYS SUGAR-FREE. You're basically a different organism at this point.",
-  "Day 6: One day left. Sugar has given up trying to reach you. Blocked.",
-  "🏆 SEVEN DAYS SUGAR-FREE! You completed the side quest. Final boss defeated.",
+  "Day 6: Six days! Sugar has filed a missing persons report. You cannot be found.",
+  "Day 7: A full week with no sugar. Your pancreas just sent you a thank-you card.",
+  "Day 8: Eight days! At this point sugar is a distant memory, like a bad ex.",
+  "Day 9: Nine days in. You are so close to double digits it's basically criminal.",
+  "Day 10: TEN DAYS. Double digits. Sugar-free royalty. Bow.",
+  "Day 11: One more day. Eleven days of pure, unhinged discipline. Disgusting. Iconic.",
+  "🏆 TWELVE DAYS SUGAR-FREE! You didn't just complete the side quest — you broke the game.",
 ];
 
 // ── Daily Phrases (42 total, one per day) ───────────────────
