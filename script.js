@@ -105,7 +105,12 @@ function buildSugarTracker() {
   const sugarDay = Math.min(Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1), SUGAR_DAYS);
   const finished = sugarDay > SUGAR_DAYS;
 
-  document.getElementById('sugar-day').textContent = finished ? SUGAR_DAYS : sugarDay;
+  const displayDay = finished ? SUGAR_DAYS : sugarDay;
+  const sugarPct   = Math.round((displayDay / SUGAR_DAYS) * 100);
+
+  document.getElementById('sugar-day').textContent = displayDay;
+  document.getElementById('sugar-pct').textContent  = sugarPct + '%';
+  document.getElementById('sugar-bar').style.width  = sugarPct + '%';
 
   const container = document.getElementById('sugar-dots');
   const EMOJIS = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣'];

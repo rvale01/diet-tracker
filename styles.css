@@ -416,6 +416,38 @@ blockquote {
   font-size: 0.75rem;
 }
 
+.sugar-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#sugar-pct { color: var(--orange); }
+
+.sugar-bar-inner {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fb923c, #eab308);
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 16px rgba(251,146,60,.4);
+  position: relative;
+  min-width: 0;
+}
+
+.sugar-bar-inner::after {
+  content: '🚫';
+  position: absolute;
+  right: -0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+}
+
 .sugar-status {
   text-align: center;
   font-size: 0.9rem;
