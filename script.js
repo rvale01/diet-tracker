@@ -3,7 +3,7 @@ const START_DATE = new Date('2026-04-06T00:00:00');
 const TOTAL_DAYS = 42;
 
 const SUGAR_START  = new Date('2026-04-06T00:00:00');
-const SUGAR_DAYS   = 12;
+const SUGAR_DAYS   = 21;
 const SUGAR_STATUS = [
   "Day 1: You looked a candy bar in the eye and said no. Legendary.",
   "Day 2: Sugar is frantically texting you. Don't reply.",
@@ -15,8 +15,17 @@ const SUGAR_STATUS = [
   "Day 8: Eight days! At this point sugar is a distant memory, like a bad ex.",
   "Day 9: Nine days in. You are so close to double digits it's basically criminal.",
   "Day 10: TEN DAYS. Double digits. Sugar-free royalty. Bow.",
-  "Day 11: One more day. Eleven days of pure, unhinged discipline. Disgusting. Iconic.",
-  "🏆 TWELVE DAYS SUGAR-FREE! You didn't just complete the side quest — you broke the game.",
+  "Day 11: Eleven days of pure, unhinged discipline. Your future self is obsessed with you.",
+  "Day 12: Twelve days! The halfway point is in the rearview mirror. No looking back.",
+  "Day 13: Day 13 of no sugar. At this point your taste buds have gone full Stockholm syndrome for vegetables.",
+  "Day 14: TWO WEEKS SUGAR-FREE. This is no longer a challenge. This is a lifestyle.",
+  "Day 15: Day 15! Three-quarters of the way there. Sugar WHO? Never heard of her.",
+  "Day 16: Sixteen days. Scientists are requesting to study you. You are the anomaly.",
+  "Day 17: Day 17: four days left. You have eaten zero grams of sugar for 17 days. That is genuinely unhinged behaviour. Respect.",
+  "Day 18: Three days left. At this point your cells are running on pure spite and discipline.",
+  "Day 19: TWO DAYS LEFT. The finish line is close enough to lick. Don't. It might be sweet.",
+  "Day 20: ONE MORE DAY. Tomorrow you'll have done something most people only talk about doing.",
+  "🏆 21 DAYS SUGAR-FREE! You rewired your brain. You reset your palate. You are not the same person who started this. Unreal.",
 ];
 
 // ── Daily Phrases (42 total, one per day) ───────────────────
