@@ -448,6 +448,69 @@ blockquote {
   font-size: 1.1rem;
 }
 
+/* ── Round 1 record ── */
+.round1 {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.round1-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.round1-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.round1-score {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--orange);
+  opacity: 0.7;
+}
+
+.round1-dots {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.round1-dot {
+  aspect-ratio: 1;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.round1-dot.done {
+  background: linear-gradient(135deg, rgba(251,146,60,.5), rgba(234,179,8,.4));
+  color: var(--bg);
+}
+
+.round1-dot.muffin {
+  background: rgba(251,146,60,.12);
+  border: 1px dashed rgba(251,146,60,.3);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.round1-dot.future {
+  background: rgba(255,255,255,.03);
+  border: 1px dashed var(--border);
+  color: var(--border);
+}
+
 .sugar-status {
   text-align: center;
   font-size: 0.9rem;

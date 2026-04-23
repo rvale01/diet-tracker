@@ -154,6 +154,21 @@ function buildSugarTracker() {
   }
 }
 
+// ── Round 1 Record (18 days completed, ended by muffin on day 18) ───
+function buildRound1() {
+  const ROUND1_DONE   = 18;
+  const ROUND1_TOTAL  = 21;
+  const container = document.getElementById('round1-dots');
+  for (let d = 1; d <= ROUND1_TOTAL; d++) {
+    const dot = document.createElement('div');
+    dot.className = 'round1-dot';
+    if (d < ROUND1_DONE)       { dot.classList.add('done');   dot.textContent = d; }
+    else if (d === ROUND1_DONE){ dot.classList.add('muffin'); dot.textContent = '🧁'; }
+    else                       { dot.classList.add('future'); dot.textContent = d; }
+    container.appendChild(dot);
+  }
+}
+
 // ── Weeks Grid ───────────────────────────────────────────────
 function buildGrid(currentDay) {
   const grid = document.getElementById('weeks-grid');
@@ -202,6 +217,7 @@ function init() {
 
   // Sugar-Free Challenge
   buildSugarTracker();
+  buildRound1();
 
   // Grid
   buildGrid(day);
