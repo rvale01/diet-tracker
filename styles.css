@@ -359,21 +359,21 @@ blockquote {
   font-weight: 600;
 }
 
-/* 7 large day dots */
+/* 21 day dots — 7 per row */
 .sugar-dots {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  gap: 0.35rem;
   margin-bottom: 1rem;
 }
 
 .sugar-dot {
   aspect-ratio: 1;
-  border-radius: 0.75rem;
+  border-radius: 0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 0.75rem;
   font-weight: 800;
   transition: transform 0.15s;
   position: relative;

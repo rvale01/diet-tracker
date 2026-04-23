@@ -2,7 +2,7 @@
 const START_DATE = new Date('2026-04-06T00:00:00');
 const TOTAL_DAYS = 42;
 
-const SUGAR_START  = new Date('2026-04-06T00:00:00');
+const SUGAR_START  = new Date('2026-04-27T00:00:00');
 const SUGAR_DAYS   = 21;
 const SUGAR_STATUS = [
   "Day 1: You looked a candy bar in the eye and said no. Legendary.",
@@ -116,32 +116,42 @@ function createStars() {
 function buildSugarTracker() {
   const now      = new Date();
   const diff     = now - SUGAR_START;
-  const sugarDay = Math.min(Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1), SUGAR_DAYS);
-  const finished = sugarDay > SUGAR_DAYS;
+  const rawDay   = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+  const notStarted = rawDay < 1;
+  const finished   = rawDay > SUGAR_DAYS;
+  const sugarDay   = Math.min(Math.max(rawDay, 1), SUGAR_DAYS);
 
-  const displayDay = finished ? SUGAR_DAYS : sugarDay;
-  const sugarPct   = Math.round((displayDay / SUGAR_DAYS) * 100);
+  const displayDay = notStarted ? 0 : (finished ? SUGAR_DAYS : sugarDay);
+  const sugarPct   = notStarted ? 0 : Math.round((displayDay / SUGAR_DAYS) * 100);
 
-  document.getElementById('sugar-day').textContent = displayDay;
+  document.getElementById('sugar-day').textContent = notStarted ? '–' : displayDay;
   document.getElementById('sugar-pct').textContent  = sugarPct + '%';
   document.getElementById('sugar-bar').style.width  = sugarPct + '%';
 
   const container = document.getElementById('sugar-dots');
-  const EMOJIS = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣'];
+  const NUMS = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21'];
   for (let d = 1; d <= SUGAR_DAYS; d++) {
     const dot = document.createElement('div');
     dot.className = 'sugar-dot';
-    dot.textContent = EMOJIS[d - 1];
-    if (d < sugarDay || finished)    dot.classList.add('done');
-    else if (d === sugarDay)          dot.classList.add('today');
-    else                              dot.classList.add('future');
+    dot.textContent = NUMS[d - 1];
+    if (notStarted)                    dot.classList.add('future');
+    else if (d < sugarDay || finished) dot.classList.add('done');
+    else if (d === sugarDay)           dot.classList.add('today');
+    else                               dot.classList.add('future');
     container.appendChild(dot);
   }
 
   const statusEl = document.getElementById('sugar-status');
-  const idx = Math.min(sugarDay, SUGAR_DAYS) - 1;
-  statusEl.textContent = SUGAR_STATUS[idx];
-  if (finished) statusEl.classList.add('done-all');
+  if (notStarted) {
+    const daysUntil = Math.abs(rawDay - 1);
+    statusEl.textContent = daysUntil === 0
+      ? "The muffin has been accounted for. Fresh start tomorrow. 🫡"
+      : `The muffin has been accounted for. Restarting in ${daysUntil} day${daysUntil > 1 ? 's' : ''}. Enjoy the weekend. 🧁`;
+  } else {
+    const idx = Math.min(sugarDay, SUGAR_DAYS) - 1;
+    statusEl.textContent = SUGAR_STATUS[idx];
+    if (finished) statusEl.classList.add('done-all');
+  }
 }
 
 // ── Weeks Grid ───────────────────────────────────────────────
