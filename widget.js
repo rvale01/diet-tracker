@@ -9,14 +9,14 @@ const START = new Date(2026, 10, 9);   // Mon Nov 9
 const TOTAL_DAYS = 29;                 // → Mon Dec 7
 
 const PHRASES = [
-  "Day 1 of the Winter Arc. Sugar and gluten have been evicted.",
+  "Day 1 of the Winter Arc. Sugar evicted. Gluten on probation.",
   "A croissant made eye contact. You did not blink.",
   "Withdrawal is just another opponent. Oss.",
   "Your protein shake: the most reliable relationship you have.",
   "More water than a houseplant. Hydrated. Dangerous.",
-  "Weekend boss fight. Eggs are allies. Toast is a traitor.",
+  "Weekend boss fight. Eggs are allies. Syrup is a traitor.",
   "WEEK 1 DONE. Belt didn't change colour, your soul did.",
-  "Week 2. The cravings are scared of you now.",
+  "Week 2. Gluten grace period OVER. Bye, bread.",
   "More kata than biscuits this month. Historic ratio.",
   "DOUBLE DIGITS. Dramatic bow recommended.",
   "7 hours of sleep. On purpose. Scientists baffled.",
