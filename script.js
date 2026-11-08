@@ -4,21 +4,21 @@ const END   = new Date(2026, 11, 7);   // Mon Dec 7, 2026
 const TOTAL_DAYS = 29;
 const WATER_GOAL = 8;                  // glasses of 250 ml = 2 L
 const SLEEP_GOAL = 7;
-const WEEKLY_GYM = 3;
-const WEEKLY_KARATE = 3;
+const WEEKLY_TRAINING = 3;             // gym sessions per week (karate counts)
+const GLUTEN_FROM = 8;                 // gluten allowed in week 1 (days 1–7)
 const STORE_KEY = 'dietChronicles.round3';
 
 const PHRASES = [
   // Week 1
-  { text: "Day 1 of the Winter Arc. Sugar, gluten, and your old self have all been served eviction notices.", emoji: "🌱" },
+  { text: "Day 1 of the Winter Arc. Sugar and your old self have been served eviction notices. Gluten gets a one-week grace period.", emoji: "🌱" },
   { text: "Day 2: a croissant made eye contact with you today. You did not blink. Terrifying.", emoji: "🥐" },
   { text: "Day 3: the sugar withdrawal is real. You are a karateka. Withdrawal is just another opponent. Oss.", emoji: "🥋" },
   { text: "Day 4: your protein shake is now your most reliable relationship. It shows up every morning. No drama.", emoji: "🥤" },
   { text: "Day 5: you've had more water this week than a medium-sized houseplant. Hydrated. Glowing. Dangerous.", emoji: "💧" },
-  { text: "Day 6: weekend boss fight. Brunch is the enemy. Eggs are your allies. Toast is a traitor.", emoji: "🍳" },
+  { text: "Day 6: weekend boss fight. Brunch pastries are the enemy. Eggs are your allies. Syrup is a traitor.", emoji: "🍳" },
   { text: "WEEK 1 COMPLETE. Seven days of discipline. Your belt didn't change colour, but your soul did.", emoji: "🥇" },
   // Week 2
-  { text: "Week 2 unlocked. The cravings are getting quieter. They're scared of you now.", emoji: "🔓" },
+  { text: "Week 2: gluten's grace period is OVER. Bread, we had a good run. The cravings are scared of you now.", emoji: "🔓" },
   { text: "Day 9: you've done more kata than you've eaten biscuits this month. That ratio is historic.", emoji: "📈" },
   { text: "Day 10! DOUBLE DIGITS. Celebrate with a ceremony (non-edible). Maybe a dramatic bow.", emoji: "🎉" },
   { text: "Day 11: you slept 7 hours on purpose. As an adult. Scientists are baffled.", emoji: "😴" },
@@ -39,7 +39,7 @@ const PHRASES = [
   { text: "Day 24: Christmas sweets are appearing in shops. You walk past them like a ninja. Unbothered.", emoji: "🥷" },
   { text: "Day 25: five days left. Your sensei would nod at you slowly. Maybe even a half-smile.", emoji: "🙇" },
   { text: "Day 26: four days. Quitting now would be a crime against your past 25 days. We don't do crimes.", emoji: "🚔" },
-  { text: "Day 27: three days. The finish line is close enough to lick. Don't. It might contain gluten.", emoji: "🏁" },
+  { text: "Day 27: two days. The finish line is close enough to lick. Don't. It might contain gluten.", emoji: "🏁" },
   { text: "Day 28: FOUR FULL WEEKS. One more sunrise. Tonight, sleep like the champion you are.", emoji: "🌙" },
   { text: "DAY 29. DECEMBER 7. YOU ABSOLUTE LEGEND. You said you would, and then you DID. Weigh in. Take the photo. Hall of fame.", emoji: "🏆" },
 ];
@@ -83,10 +83,12 @@ function dayData(n) {
 }
 function peekDay(n) { return state.days[keyOf(dateOfDay(n))]; }
 
-function scoreOf(d) {
+function glutenFree(n) { return n >= GLUTEN_FROM; }
+function maxScore(n) { return glutenFree(n) ? 5 : 4; }
+function scoreOf(d, n) {
   if (!d) return 0;
   let s = 0;
-  QUEST_KEYS.forEach(k => { if (d[k]) s++; });
+  QUEST_KEYS.forEach(k => { if (d[k] && (k !== 'gluten' || glutenFree(n))) s++; });
   if (d.water >= WATER_GOAL) s++;
   if (d.sleep >= SLEEP_GOAL) s++;
   return s;
@@ -149,9 +151,9 @@ function renderGrid() {
     const b = document.createElement('button');
     b.className = 'day-dot';
     b.textContent = n === TOTAL_DAYS ? '🏆' : n;
-    const s = scoreOf(peekDay(n));
+    const s = scoreOf(peekDay(n), n);
     if (n > t) b.classList.add('future');
-    else if (s === 5) b.classList.add('perfect');
+    else if (s === maxScore(n)) b.classList.add('perfect');
     else if (s > 0) b.classList.add('partial');
     else if (n < t) b.classList.add('missed');
     else b.classList.add('empty');
@@ -165,14 +167,14 @@ function renderGrid() {
 }
 
 // ── Checklist ────────────────────────────────────────────────
-const STATUS = [
-  "Fresh day. Fresh start. Let's get it. 🌅",
-  "One down! The momentum has begun. 🔥",
-  "Two quests done. Keep stacking. 🧱",
-  "Halfway through today's quests. Don't stop now. 💪",
-  "One more and it's a PERFECT DAY. Go go go! ⚡",
-  "⭐ PERFECT DAY. Flawless. Your sensei is proud. Oss! ⭐",
-];
+function statusText(s, max) {
+  if (s === max) return "⭐ PERFECT DAY. Flawless. Your sensei is proud. Oss! ⭐";
+  if (max - s === 1) return "One more and it's a PERFECT DAY. Go go go! ⚡";
+  if (s === 0) return "Fresh day. Fresh start. Let's get it. 🌅";
+  if (s === 1) return "One down! The momentum has begun. 🔥";
+  if (s === 2) return "Two quests done. Keep stacking. 🧱";
+  return "Over halfway through today's quests. Don't stop now. 💪";
+}
 
 function renderChecklist() {
   const t = todayNum();
@@ -196,6 +198,15 @@ function renderChecklist() {
 
   document.querySelectorAll('.quest').forEach(q => q.classList.toggle('on', !!d[q.dataset.key]));
 
+  // Gluten is allowed in week 1
+  const gq = document.querySelector('.quest[data-key=gluten]');
+  const graceful = !glutenFree(n);
+  gq.classList.toggle('grace', graceful);
+  gq.querySelector('.q-ico').textContent = graceful ? '🍞' : '🚫🍞';
+  gq.querySelector('.q-txt').innerHTML = graceful
+    ? 'Gluten allowed this week<small>No-gluten starts Mon 16 Nov</small>'
+    : 'No gluten<small>Bread, pasta, pastries: banished</small>';
+
   const w = d.water || 0;
   document.getElementById('water-val').textContent = w;
   document.getElementById('water-sub').textContent = `${w} / ${WATER_GOAL} glasses · ${(w * 0.25).toFixed(2).replace(/0$/, '')} L`;
@@ -214,13 +225,13 @@ function renderChecklist() {
   document.getElementById('sleep-sub').textContent = sl >= SLEEP_GOAL ? `${sl}h · goal reached 🌙` : `Goal: ${SLEEP_GOAL}+ hours`;
   document.getElementById('sleep-row').classList.toggle('on', sl >= SLEEP_GOAL);
 
-  const s = scoreOf(d);
+  const s = scoreOf(d, n), max = maxScore(n);
   const scoreEl = document.getElementById('day-score');
-  scoreEl.textContent = `${s}/5`;
-  scoreEl.classList.toggle('perfect', s === 5);
+  scoreEl.textContent = `${s}/${max}`;
+  scoreEl.classList.toggle('perfect', s === max);
   const st = document.getElementById('day-status');
-  st.textContent = locked ? '' : STATUS[s];
-  st.classList.toggle('perfect', s === 5);
+  st.textContent = locked ? '' : statusText(s, max);
+  st.classList.toggle('perfect', s === max);
 }
 
 function bindChecklist() {
@@ -229,6 +240,7 @@ function bindChecklist() {
       if (todayNum() < 1) return;
       const d = dayData(selected);
       const k = q.dataset.key;
+      if (k === 'gluten' && !glutenFree(selected)) return;
       d[k] = !d[k];
       if (k === 'rest' && d.rest) { d.gym = false; d.karate = false; }
       if ((k === 'gym' || k === 'karate') && d[k]) d.rest = false;
@@ -256,11 +268,13 @@ function renderWeek() {
   const t = Math.min(Math.max(todayNum(), 1), TOTAL_DAYS);
   const w = weekOf(selected <= t ? selected : t);
   const [a, b] = weekRange(w);
-  let gym = 0, karate = 0;
+  let gym = 0, karate = 0, trained = 0;
   for (let n = a; n <= b; n++) {
     const d = peekDay(n);
-    if (d && d.gym) gym++;
-    if (d && d.karate) karate++;
+    if (!d) continue;
+    if (d.gym) gym++;
+    if (d.karate) karate++;
+    if (d.gym || d.karate) trained++;
   }
   const startD = dateOfDay(a), endD = dateOfDay(b);
   document.getElementById('week-title').textContent =
@@ -275,23 +289,22 @@ function renderWeek() {
       el.appendChild(p);
     }
   };
-  pips('gym-pips', gym, WEEKLY_GYM);
-  pips('karate-pips', karate, WEEKLY_KARATE);
-  document.getElementById('gym-count').textContent = `${gym}/${WEEKLY_GYM}`;
-  document.getElementById('karate-count').textContent = `${karate}/${WEEKLY_KARATE}`;
+  pips('train-pips', trained, WEEKLY_TRAINING);
+  document.getElementById('train-count').textContent = `${trained}/${WEEKLY_TRAINING}`;
+  document.getElementById('train-split').textContent =
+    trained ? `🏋️ ${gym} gym · 🥋 ${karate} karate` : 'Karate counts as a gym session 🥋';
 
   const ms = state.sessions
     .filter(s => { const n = dayNumOf(new Date(s.start)); return n >= a && n <= b; })
     .reduce((sum, s) => sum + (s.end - s.start), 0);
   document.getElementById('week-mins').textContent = fmtDur(ms);
 
-  const sessions = gym + karate;
   let note;
+  const left = WEEKLY_TRAINING - trained;
   if (w === 5) note = "Last day. Make it count. 🏁";
-  else if (gym >= WEEKLY_GYM && karate >= WEEKLY_KARATE) note = "Weekly goals smashed. Remember to rest at least one day. 🛌";
-  else if (sessions >= 6) note = "Big week. Take a rest day. 🛌";
-  else if (gym >= WEEKLY_GYM) note = "Gym goal done for the week ✅";
-  else note = `${WEEKLY_GYM - gym} gym session${WEEKLY_GYM - gym === 1 ? '' : 's'} left this week.`;
+  else if (trained >= 5) note = "Beast week. Make sure you take a rest day. 🛌";
+  else if (left <= 0) note = "Weekly goal smashed ✅ Anything else is a bonus.";
+  else note = `${left} session${left === 1 ? '' : 's'} left this week.`;
   document.getElementById('week-note').textContent = note;
 }
 
@@ -399,8 +412,9 @@ function streak(key) {
   let n = t;
   const td = peekDay(t);
   if (!(td && td[key])) n = t - 1;   // today not ticked yet: count up to yesterday
+  const first = key === 'gluten' ? GLUTEN_FROM : 1;
   let c = 0;
-  while (n >= 1) {
+  while (n >= first) {
     const d = peekDay(n);
     if (d && d[key]) { c++; n--; } else break;
   }
@@ -414,7 +428,7 @@ function renderStats() {
   for (let n = 1; n <= TOTAL_DAYS; n++) {
     const d = peekDay(n);
     if (!d) continue;
-    if (scoreOf(d) === 5) perfect++;
+    if (scoreOf(d, n) === maxScore(n)) perfect++;
     if (d.water > 0) { waterSum += d.water; waterDays++; }
   }
   document.getElementById('perfect-days').textContent = perfect;

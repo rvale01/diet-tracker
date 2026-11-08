@@ -311,3 +311,7 @@ footer {
   .act { font-size: 0.7rem; }
   .week-goal { grid-template-columns: 5.2rem 1fr 2.3rem; }
 }
+
+.quest.grace { background: rgba(251,146,60,.08); border-style: dashed; border-color: rgba(251,146,60,.4); cursor: default; }
+.quest.grace .q-box { display: none; }
+.week-split { margin-top: 0.4rem; }

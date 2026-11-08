@@ -20,7 +20,7 @@
     <div class="logo">🥋</div>
     <h1>The Diet Chronicles</h1>
     <p class="subtitle">Round 3 · The Winter Arc</p>
-    <p class="subtitle-small">No sugar. No gluten. No mercy.</p>
+    <p class="subtitle-small">No sugar. No gluten (from week 2). No mercy.</p>
   </header>
 
   <main>
@@ -96,7 +96,7 @@
 
         <div class="divider-label">Training</div>
         <button class="quest training" data-key="gym"><span class="q-ico">🏋️</span><span class="q-txt">Gym<small>Strength focus</small></span><span class="q-box"></span></button>
-        <button class="quest training" data-key="karate"><span class="q-ico">🥋</span><span class="q-txt">Karate<small>Oss.</small></span><span class="q-box"></span></button>
+        <button class="quest training" data-key="karate"><span class="q-ico">🥋</span><span class="q-txt">Karate<small>Counts as a gym session · Oss.</small></span><span class="q-box"></span></button>
         <button class="quest training" data-key="rest"><span class="q-ico">🛌</span><span class="q-txt">Rest day<small>Recovery is training too</small></span><span class="q-box"></span></button>
       </div>
 
@@ -128,11 +128,9 @@
         <div class="week-mins" id="week-mins">0 min</div>
       </div>
       <div class="week-goal">
-        <span>🏋️ Gym</span><div class="pips" id="gym-pips"></div><span id="gym-count">0/3</span>
+        <span>🏋️ Gym</span><div class="pips" id="train-pips"></div><span id="train-count">0/3</span>
       </div>
-      <div class="week-goal">
-        <span>🥋 Karate</span><div class="pips" id="karate-pips"></div><span id="karate-count">0/3</span>
-      </div>
+      <div class="week-split muted small" id="train-split"></div>
       <div class="week-note" id="week-note"></div>
     </section>
 
