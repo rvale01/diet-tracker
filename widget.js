@@ -68,6 +68,7 @@ grad.colors = [new Color('#0f172a'), new Color('#1e293b')];
 grad.locations = [0, 1];
 w.backgroundGradient = grad;
 w.setPadding(14, 16, 14, 16);
+w.url = 'https://diet-tracker-hazel.vercel.app';   // tap to open the tracker
 
 const title = w.addText('🥋 Winter Arc');
 title.font = Font.boldSystemFont(13);
