@@ -3,171 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>The Diet Chronicles</title>
-
-  <!-- iOS Home Screen PWA -->
+  <title>Dashboard</title>
+  <meta name="description" content="My personal dashboard: today, bills, calendar, health and to-dos." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Diet Chronicles" />
-  <meta name="theme-color" content="#0f172a" />
-
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="apple-mobile-web-app-title" content="Dashboard" />
+  <meta name="theme-color" content="#0b1120" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 </head>
 <body>
-  <div class="stars" id="stars"></div>
-
-  <header>
-    <div class="logo">🥋</div>
-    <h1>The Diet Chronicles</h1>
-    <p class="subtitle">Round 3 · The Winter Arc</p>
-    <p class="subtitle-small">No sugar. No gluten (from week 2). No mercy.</p>
-  </header>
-
-  <main>
-    <!-- Day Counter -->
-    <section class="card day-card">
-      <div>
-        <div class="day-badge" id="day-badge">DAY ?</div>
-        <div class="total-days" id="total-days">of 29</div>
-      </div>
-      <div class="date-display" id="date-display"></div>
-    </section>
-
-    <!-- Daily Phrase -->
-    <section class="card phrase-card">
-      <div class="phrase-label">Today's Wisdom</div>
-      <blockquote id="daily-phrase">Loading...</blockquote>
-      <div class="phrase-emoji" id="phrase-emoji">✨</div>
-    </section>
-
-    <!-- Progress -->
-    <section class="card">
-      <div class="row-between label">
-        <span>The Journey</span>
-        <span id="progress-pct" class="accent-teal">0%</span>
-      </div>
-      <div class="bar-outer"><div class="bar-inner" id="progress-bar"></div></div>
-      <div class="weeks-grid" id="weeks-grid"></div>
-      <div class="legend">
-        <span><i class="lg perfect"></i>Perfect</span>
-        <span><i class="lg partial"></i>Partial</span>
-        <span><i class="lg missed"></i>Missed</span>
-        <span class="muted">Tap a day to edit it</span>
-      </div>
-    </section>
-
-    <!-- Daily Checklist -->
-    <section class="card check-card">
-      <div class="row-between">
-        <div>
-          <div class="label">Daily Quests</div>
-          <div class="card-title" id="check-title">Today</div>
-        </div>
-        <div class="score" id="day-score">0/5</div>
-      </div>
-
-      <div id="check-locked" class="locked hidden"></div>
-
-      <div id="check-body">
-        <button class="quest" data-key="sugar"><span class="q-ico">🚫🍬</span><span class="q-txt">No refined sugar or sweets<small>Fruit is allowed 🍓</small></span><span class="q-box"></span></button>
-        <button class="quest" data-key="gluten"><span class="q-ico">🚫🍞</span><span class="q-txt">No gluten<small>Bread, pasta, pastries: banished</small></span><span class="q-box"></span></button>
-        <button class="quest" data-key="protein"><span class="q-ico">🥤</span><span class="q-txt">Protein breakfast<small>Shake (+ fruit or yogurt)</small></span><span class="q-box"></span></button>
-
-        <div class="stepper" id="water-row">
-          <span class="q-ico">💧</span>
-          <span class="q-txt">Water<small id="water-sub">0 / 8 glasses · 0 L</small></span>
-          <div class="step-ctrl">
-            <button class="step" data-step="water" data-d="-1">−</button>
-            <span class="step-val" id="water-val">0</span>
-            <button class="step" data-step="water" data-d="1">+</button>
-          </div>
-        </div>
-        <div class="glasses" id="glasses"></div>
-
-        <div class="stepper" id="sleep-row">
-          <span class="q-ico">😴</span>
-          <span class="q-txt">Sleep last night<small id="sleep-sub">Goal: 7+ hours</small></span>
-          <div class="step-ctrl">
-            <button class="step" data-step="sleep" data-d="-0.5">−</button>
-            <span class="step-val" id="sleep-val">0</span>
-            <button class="step" data-step="sleep" data-d="0.5">+</button>
-          </div>
-        </div>
-
-        <div class="divider-label">Training</div>
-        <button class="quest training" data-key="gym"><span class="q-ico">🏋️</span><span class="q-txt">Gym<small>Strength focus</small></span><span class="q-box"></span></button>
-        <button class="quest training" data-key="karate"><span class="q-ico">🥋</span><span class="q-txt">Karate<small>Counts as a gym session · Oss.</small></span><span class="q-box"></span></button>
-        <button class="quest training" data-key="rest"><span class="q-ico">🛌</span><span class="q-txt">Rest day<small>Recovery is training too</small></span><span class="q-box"></span></button>
-      </div>
-
-      <div class="day-status" id="day-status"></div>
-    </section>
-
-    <!-- Training Timer -->
-    <section class="card timer-card">
-      <div class="label">Training Timer</div>
-      <div class="activities" id="activities">
-        <button class="act" data-act="gym">🏋️ Gym</button>
-        <button class="act" data-act="karate">🥋 Karate</button>
-        <button class="act" data-act="kickboxing">🥊 Kickboxing</button>
-        <button class="act" data-act="cardio">🏃 Cardio</button>
-      </div>
-      <div class="nose-note hidden" id="nose-note">👃 Only pads, bag and conditioning until the doctor OKs your nose for contact.</div>
-      <div class="timer-display" id="timer-display">00:00:00</div>
-      <button class="timer-btn" id="timer-btn">▶ Start</button>
-      <div class="sessions" id="sessions"></div>
-    </section>
-
-    <!-- Weekly -->
-    <section class="card week-card">
-      <div class="row-between">
-        <div>
-          <div class="label">This Week</div>
-          <div class="card-title" id="week-title">Week 1</div>
-        </div>
-        <div class="week-mins" id="week-mins">0 min</div>
-      </div>
-      <div class="week-goal">
-        <span>🏋️ Gym</span><div class="pips" id="train-pips"></div><span id="train-count">0/3</span>
-      </div>
-      <div class="week-split muted small" id="train-split"></div>
-      <div class="week-note" id="week-note"></div>
-    </section>
-
-    <!-- Streaks + Countdown -->
-    <section class="card stats-card">
-      <div class="stat"><span class="stat-num" id="streak-sugar">0</span><span class="stat-label">🚫🍬 Sugar-free streak</span></div>
-      <div class="stat"><span class="stat-num" id="streak-gluten">0</span><span class="stat-label">🚫🍞 Gluten-free streak</span></div>
-      <div class="stat"><span class="stat-num" id="perfect-days">0</span><span class="stat-label">⭐ Perfect days</span></div>
-      <div class="stat"><span class="stat-num" id="days-left">29</span><span class="stat-label">⏳ Days to glory</span></div>
-      <div class="stat"><span class="stat-num" id="total-hours">0h</span><span class="stat-label">⏱️ Total training</span></div>
-      <div class="stat"><span class="stat-num" id="avg-water">–</span><span class="stat-label">💧 Avg water (L)</span></div>
-    </section>
-
-    <!-- Measurements -->
-    <section class="card measure-card">
-      <div class="label">Before → After</div>
-      <div class="measure-grid">
-        <span></span><span class="m-head">Day 1</span><span class="m-head">Dec 7</span><span class="m-head">Δ</span>
-        <span class="m-lbl">Weight (kg)</span>
-        <input type="number" step="0.1" inputmode="decimal" data-m="w1" />
-        <input type="number" step="0.1" inputmode="decimal" data-m="w2" />
-        <span class="m-delta" id="d-w">–</span>
-        <span class="m-lbl">Waist (cm)</span>
-        <input type="number" step="0.5" inputmode="decimal" data-m="c1" />
-        <input type="number" step="0.5" inputmode="decimal" data-m="c2" />
-        <span class="m-delta" id="d-c">–</span>
-      </div>
-      <p class="muted small">📸 Take a photo on day 1 and on Dec 7. You'll thank yourself.</p>
-    </section>
-  </main>
-
-  <footer>
-    <p>Mon Nov 9 &nbsp;•&nbsp; Mon Dec 7, 2026</p>
-    <p class="footer-tagline">You vs. You. Every single day.</p>
-    <p class="small"><a href="spring-2026/">🌸 Spring 2026 archive</a> · Data is saved on this device</p>
-  </footer>
-
-  <script src="script.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
