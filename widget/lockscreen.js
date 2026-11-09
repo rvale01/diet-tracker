@@ -15,6 +15,9 @@ const KEY = 'dashboard.token';
 const DEFAULT_LINES = ['elizabeth', 'dlr'];
 const DEFAULT_PLACE = { name: 'London', lat: 51.5074, lon: -0.1278 };
 const SHORT = { elizabeth: 'Elizabeth', dlr: 'DLR', 'hammersmith-city': 'H&C', 'waterloo-city': 'W&C' };
+// Dark text. On the Lock Screen iOS may still tint widgets to match the clock; the Home Screen version always uses it.
+const INK = new Color('#0f172a');
+const PAPER = new Color('#f8fafc');
 
 // ── Sign-in and requests ─────────────────────────────────────
 async function signIn() {
@@ -115,6 +118,7 @@ async function loadAll() {
 function text(stack, str, font, opacity = 1) {
   const t = stack.addText(str);
   t.font = font;
+  t.textColor = INK;
   t.textOpacity = opacity;
   t.lineLimit = 1;
   t.minimumScaleFactor = 0.7;
@@ -131,42 +135,50 @@ const eventLine = (e) => `${e.time === 'All day' ? '📌' : e.time} ${e.title}`;
 
 // ── Layouts ──────────────────────────────────────────────────
 function rectangular(w, d) {
-  text(w, `${wxLine(d.wx)} · ${tubeLine(d.tube)}`, Font.boldSystemFont(13));
-  if (!d.events) text(w, 'Calendar unavailable', Font.systemFont(12), 0.85);
-  else if (!d.events.length) text(w, 'No more appointments today', Font.systemFont(12), 0.85);
+  // Three big lines spread over the whole widget height.
+  w.setPadding(0, 0, 0, 0);
+  text(w, `${wxLine(d.wx)} · ${tubeLine(d.tube)}`, Font.boldSystemFont(17));
+  w.addSpacer();
+  if (!d.events) text(w, 'Calendar unavailable', Font.semiboldSystemFont(16));
+  else if (!d.events.length) text(w, 'No more appointments', Font.semiboldSystemFont(16));
   else {
-    d.events.slice(0, 2).forEach((e) => text(w, eventLine(e), Font.systemFont(12), 0.9));
-    if (d.events.length > 2) text(w, `+${d.events.length - 2} more today`, Font.systemFont(11), 0.7);
+    const extra = d.events.length - 2;
+    d.events.slice(0, 2).forEach((e, i) => {
+      if (i) w.addSpacer();
+      text(w, eventLine(e) + (i === 1 && extra > 0 ? `  +${extra}` : ''), Font.semiboldSystemFont(16));
+    });
+    if (d.events.length === 1) { w.addSpacer(); text(w, 'Nothing else today', Font.systemFont(14), 0.7); }
   }
 }
 
 function circular(w, d) {
   w.addAccessoryWidgetBackground = true;
   w.addSpacer();
-  const r1 = w.addStack(); r1.addSpacer(); text(r1, d.wx ? d.wx.icon : '🌡️', Font.systemFont(16)); r1.addSpacer();
-  const r2 = w.addStack(); r2.addSpacer(); text(r2, d.wx ? `${d.wx.temp}°` : '–', Font.boldSystemFont(15)); r2.addSpacer();
+  const r1 = w.addStack(); r1.addSpacer(); text(r1, d.wx ? d.wx.icon : '🌡️', Font.systemFont(20)); r1.addSpacer();
+  const r2 = w.addStack(); r2.addSpacer(); text(r2, d.wx ? `${d.wx.temp}°` : '–', Font.boldSystemFont(18)); r2.addSpacer();
   w.addSpacer();
 }
 
 function inline(w, d) {
   const bad = d.tube ? d.tube.filter((l) => !l.good).length : 0;
   const ev = d.events ? (d.events.length ? `${d.events.length} today` : 'free day') : '';
-  text(w, `${wxLine(d.wx)} · ${d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''}` : '🚇 ✓') : ''} · ${ev}`, Font.systemFont(12));
+  text(w, `${wxLine(d.wx)} · ${d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''}` : '🚇 ✓') : ''} · ${ev}`, Font.semiboldSystemFont(14));
 }
 
 function homeScreen(w, d, family) {
-  w.backgroundColor = new Color('#0b1120');
-  const white = (t) => { t.textColor = Color.white(); return t; };
-  white(text(w, d.wx ? `${d.wx.icon} ${d.wx.temp}°  ${d.place}` : `🌡️ ${d.place}`, Font.boldSystemFont(15)));
-  if (d.wx) white(text(w, `↑${d.wx.max}° ↓${d.wx.min}° · ☔ ${d.wx.rain}%`, Font.systemFont(11), 0.75));
-  w.addSpacer(5);
-  if (d.tube) d.tube.forEach((l) => white(text(w, `${l.good ? '🟢' : '🟠'} ${l.name}: ${l.status}`, Font.systemFont(11), 0.9)));
-  else white(text(w, '🚇 TfL unavailable', Font.systemFont(11), 0.75));
-  w.addSpacer(5);
+  // Light background with dark text, spread over the full height.
+  w.backgroundColor = PAPER;
+  const big = family !== 'small';
+  text(w, d.wx ? `${d.wx.icon} ${d.wx.temp}°  ${d.place}` : `🌡️ ${d.place}`, Font.boldSystemFont(big ? 20 : 17));
+  if (d.wx) text(w, `↑${d.wx.max}° ↓${d.wx.min}° · ☔ ${d.wx.rain}%`, Font.mediumSystemFont(13), 0.7);
+  w.addSpacer();
+  if (d.tube) d.tube.forEach((l) => text(w, `${l.good ? '🟢' : '🟠'} ${l.name}: ${l.status}`, Font.semiboldSystemFont(14)));
+  else text(w, '🚇 TfL unavailable', Font.systemFont(14), 0.7);
+  w.addSpacer();
   const max = family === 'small' ? 2 : family === 'large' ? 8 : 3;
-  if (!d.events) white(text(w, 'Calendar unavailable', Font.systemFont(11), 0.75));
-  else if (!d.events.length) white(text(w, 'No more appointments today', Font.systemFont(11), 0.75));
-  else d.events.slice(0, max).forEach((e) => white(text(w, eventLine(e), Font.systemFont(11), 0.95)));
+  if (!d.events) text(w, 'Calendar unavailable', Font.systemFont(14), 0.7);
+  else if (!d.events.length) text(w, 'No more appointments today', Font.mediumSystemFont(14), 0.7);
+  else d.events.slice(0, max).forEach((e) => text(w, eventLine(e), Font.semiboldSystemFont(14)));
 }
 
 async function build(family = config.widgetFamily || 'accessoryRectangular') {
@@ -175,9 +187,8 @@ async function build(family = config.widgetFamily || 'accessoryRectangular') {
   w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   const d = await loadAll();
   if (d.error) {
-    if (!family.startsWith('accessory')) w.backgroundColor = new Color('#0b1120');
-    const t = text(w, d.error, Font.systemFont(12));
-    if (!family.startsWith('accessory')) t.textColor = Color.white();
+    if (!family.startsWith('accessory')) w.backgroundColor = PAPER;
+    text(w, d.error, Font.semiboldSystemFont(15));
     return w;
   }
   if (family === 'accessoryInline') inline(w, d);
