@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
+import { starterBills } from './lib/bills';
 import { legacyWrites, markMigrated } from './lib/migrate';
 import { useStore } from './lib/store';
 import BoardPage from './pages/Board';
@@ -17,7 +18,12 @@ export default function App() {
 
   useEffect(() => {
     if (status !== 'ready') return;
-    const writes = legacyWrites(data);
+    const writes: Parameters<typeof putMany>[0] = legacyWrites(data);
+    // Add your usual bills once (London, Bristol, credit cards). Deleting one later won't bring it back.
+    if (!data.meta.billsSeeded) {
+      for (const b of starterBills()) if (!data.bills[b.id]) writes.push({ col: 'bills', id: b.id, value: b });
+      writes.push({ col: 'meta', id: 'billsSeeded', value: { at: Date.now() } });
+    }
     if (writes.length) putMany(writes);
     markMigrated();
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps

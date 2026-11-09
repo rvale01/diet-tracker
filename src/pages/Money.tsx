@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { BillRow, useToggleBill } from '../components/BillsDue';
+import { BillRow } from '../components/BillsDue';
 import { Card, PageHead, Sheet } from '../components/ui';
-import { BILL_ICONS, monthBills, monthlyEquivalent } from '../lib/bills';
+import { BILL_ICONS, groupBills, monthBills, OTHER_GROUP, paidTotal, parseMoney } from '../lib/bills';
 import { useCalendar } from '../lib/calendar';
 import { daysInMonth, fmtDay, money, pad, relDay, todayKey, uid } from '../lib/dates';
 import { useStore } from '../lib/store';
@@ -26,26 +26,37 @@ function useMonth() {
   return { ...ym, nav, key: `${ym.y}-${pad(ym.m)}` };
 }
 
-function BillEditor({ bill, onClose }: { bill: Bill | null; onClose: () => void }) {
+function BillEditor({ bill, groups, onClose }: { bill: Bill | null; groups: string[]; onClose: () => void }) {
   const { put } = useStore();
   const [b, setB] = useState<Bill>(bill ?? {
-    id: uid(), name: '', icon: '🏠', amount: 0, dueDay: 1, frequency: 'monthly', startMonth: new Date().getMonth() + 1, method: 'manual', active: true, createdAt: Date.now(),
+    id: uid(), name: '', icon: '🏠', group: groups[0] ?? 'London', amount: null, dueDay: null, frequency: 'monthly',
+    startMonth: new Date().getMonth() + 1, method: 'manual', active: true, createdAt: new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime(), order: 50,
   });
-  const [amount, setAmount] = useState(bill ? String(bill.amount) : '');
+  const [amount, setAmount] = useState(bill?.amount != null ? String(bill.amount) : '');
+  const [newGroup, setNewGroup] = useState('');
   const set = (patch: Partial<Bill>) => setB((x) => ({ ...x, ...patch }));
   const save = () => {
-    put('bills', b.id, { ...b, name: b.name.trim(), amount: Math.round((parseFloat(amount.replace(',', '.')) || 0) * 100) / 100 });
+    const group = b.group === '__new' ? newGroup.trim() || OTHER_GROUP : b.group;
+    put('bills', b.id, { ...b, group, name: b.name.trim(), amount: parseMoney(amount) });
     onClose();
   };
   return (
     <Sheet title={bill ? 'Edit bill' : 'New bill'} onClose={onClose}>
       <div className="icon-pick">{BILL_ICONS.map((i) => <button key={i} className={b.icon === i ? 'on' : ''} onClick={() => set({ icon: i })}>{i}</button>)}</div>
-      <div className="field"><label>Name</label><input value={b.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Rent, Phone, Netflix" autoFocus /></div>
+      <div className="field"><label>Name</label><input value={b.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Electricity, Rent" autoFocus={!bill} /></div>
       <div className="form-grid">
-        <div className="field"><label>Amount (£)</label><input type="number" inputMode="decimal" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" /></div>
-        <div className="field"><label>Due day</label>
-          <select value={b.dueDay} onChange={(e) => set({ dueDay: Number(e.target.value) })}>
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}{d === 31 ? ' (last day)' : ''}</option>)}
+        <div className="field"><label>Group</label>
+          <select value={b.group ?? OTHER_GROUP} onChange={(e) => set({ group: e.target.value })}>
+            {[...new Set([...groups, b.group ?? OTHER_GROUP])].filter((g) => g !== '__new').map((g) => <option key={g}>{g}</option>)}
+            <option value="__new">+ New group…</option>
+          </select>
+        </div>
+        {b.group === '__new' ? <div className="field"><label>New group</label><input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="e.g. Subscriptions" /></div> : <div />}
+        <div className="field"><label>Usual amount (£)</label><input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Varies" /></div>
+        <div className="field"><label>Due</label>
+          <select value={b.dueDay ?? 0} onChange={(e) => set({ dueDay: Number(e.target.value) || null })}>
+            <option value={0}>Any day</option>
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>Day {d}{d === 31 ? ' (last day)' : ''}</option>)}
           </select>
         </div>
         <div className="field"><label>How often</label>
@@ -59,18 +70,13 @@ function BillEditor({ bill, onClose }: { bill: Bill | null; onClose: () => void 
               {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
             </select>
           </div>
-        ) : <div />}
-        <div className="field"><label>Payment</label>
-          <select value={b.method} onChange={(e) => set({ method: e.target.value as Bill['method'] })}>
-            <option value="manual">I pay it</option><option value="dd">Direct debit</option>
-          </select>
-        </div>
-        <div className="field"><label>Active</label>
+        ) : <div className="field"><label>Active</label>
           <select value={b.active ? '1' : '0'} onChange={(e) => set({ active: e.target.value === '1' })}><option value="1">Yes</option><option value="0">Paused</option></select>
-        </div>
+        </div>}
       </div>
+      <p className="tiny faint">Leave the amount empty if it changes every month: you type what you paid when you tick it, and last month’s amount is suggested.</p>
       <div className="row">
-        {bill && <button className="btn danger" onClick={() => { if (confirm(`Delete ${bill.name}?`)) { put('bills', bill.id, null); onClose(); } }}>Delete</button>}
+        {bill && <button className="btn danger" onClick={() => { if (confirm(`Delete ${bill.name}? Its payment history stays in your budget.`)) { put('bills', bill.id, null); onClose(); } }}>Delete</button>}
         <div className="grow" />
         <button className="btn" onClick={onClose}>Cancel</button>
         <button className="btn primary" disabled={!b.name.trim()} onClick={save}>Save</button>
@@ -82,57 +88,39 @@ function BillEditor({ bill, onClose }: { bill: Bill | null; onClose: () => void 
 function BillsTab() {
   const { data } = useStore();
   const { y, m, nav, key } = useMonth();
-  const toggle = useToggleBill();
   const [editing, setEditing] = useState<Bill | null | 'new'>(null);
   const bills = Object.values(data.bills);
   const list = monthBills(bills, data.billPayments, y, m);
-  const total = list.reduce((s, x) => s + x.bill.amount, 0);
-  const paid = list.filter((x) => x.paid).reduce((s, x) => s + (x.paid?.amount ?? x.bill.amount), 0);
-  const perMonth = bills.filter((b) => b.active).reduce((s, b) => s + monthlyEquivalent(b), 0);
+  const grouped = groupBills(list);
+  const groups = [...new Set(bills.sort((a, b) => (a.order ?? 99) - (b.order ?? 99)).map((b) => b.group || OTHER_GROUP))];
+  const paidCount = list.filter((x) => x.paid).length;
+  const total = paidTotal(list);
   const last = `${key}-${pad(daysInMonth(y, m))}`;
   const { data: cal } = useCalendar(`${key}-01`, last, 10 * 60_000);
   const family = (cal?.familyBills ?? []).filter((f) => f.date.startsWith(key));
+  const now = new Date();
+  const isPast = y * 12 + m < now.getFullYear() * 12 + now.getMonth() + 1;
 
   return (
     <>
       <Card>
         <div className="between" style={{ marginBottom: '0.9rem' }}>{nav}<button className="btn small primary" onClick={() => setEditing('new')}>+ Bill</button></div>
         <div className="summary">
-          <div><div className="n">{money(total)}</div><div className="l">This month</div></div>
-          <div><div className="n" style={{ color: 'var(--green)' }}>{money(paid)}</div><div className="l">Paid</div></div>
-          <div><div className="n" style={{ color: total - paid > 0 ? 'var(--orange)' : undefined }}>{money(Math.max(total - paid, 0))}</div><div className="l">Left</div></div>
+          <div><div className="n">{paidCount}/{list.length}</div><div className="l">Paid</div></div>
+          <div><div className="n" style={{ color: 'var(--green)' }}>{money(total)}</div><div className="l">Paid so far</div></div>
+          <div><div className="n" style={{ color: list.length - paidCount ? 'var(--orange)' : undefined }}>{list.length - paidCount}</div><div className="l">{isPast ? 'Missed' : 'To pay'}</div></div>
         </div>
-        {list.length > 0 && <div className="bar-outer" style={{ marginTop: '0.9rem' }}><div className="bar-inner" style={{ width: `${total ? (paid / total) * 100 : 0}%`, background: 'var(--green)' }} /></div>}
+        {list.length > 0 && <div className="bar-outer" style={{ marginTop: '0.9rem' }}><div className="bar-inner" style={{ width: `${(paidCount / list.length) * 100}%`, background: 'var(--green)' }} /></div>}
       </Card>
-      <Card title={`${list.filter((x) => x.paid).length} of ${list.length} paid`}>
-        {!bills.length && <div className="empty">Add your monthly bills (rent, phone, subscriptions…) and tick them off each month. They reset on the 1st.</div>}
-        {bills.length > 0 && !list.length && <div className="empty">No bills due this month.</div>}
-        <div className="list">
-          {list.map((mb) => (
-            <div key={mb.payId} onDoubleClick={() => setEditing(mb.bill)}>
-              <BillRow mb={mb} onToggle={() => toggle(mb)} />
-            </div>
-          ))}
-        </div>
-      </Card>
-      {bills.length > 0 && (
-        <Card title="All bills" action={<span className="small muted">≈ {money(Math.round(perMonth))}/month</span>}>
-          <div className="list">
-            {[...bills].sort((a, b) => Number(b.active) - Number(a.active) || a.dueDay - b.dueDay).map((b) => (
-              <button className="list-row" key={b.id} onClick={() => setEditing(b)} style={{ textAlign: 'left', width: '100%', opacity: b.active ? 1 : 0.5 }}>
-                <span className="ico">{b.icon}</span>
-                <div className="grow"><div className="bold">{b.name}</div>
-                  <div className="small muted">{b.frequency === 'monthly' ? 'Monthly' : b.frequency === 'quarterly' ? `Every 3 months from ${MONTHS[b.startMonth - 1]}` : `Yearly in ${MONTHS[b.startMonth - 1]}`} · day {b.dueDay}{b.method === 'dd' ? ' · DD' : ''}{b.active ? '' : ' · paused'}</div>
-                </div>
-                <b className="num">{money(b.amount)}</b><span className="faint">›</span>
-              </button>
-            ))}
-          </div>
+      {!list.length && <Card><div className="empty">No bills for this month. Tap + Bill to add one.</div></Card>}
+      {grouped.map(([g, items]) => (
+        <Card key={g} title={g} action={<span className="small muted">{items.filter((x) => x.paid).length}/{items.length} · <b className="num" style={{ color: 'var(--text)' }}>{money(paidTotal(items))}</b></span>}>
+          <div className="list">{items.map((mb) => <BillRow key={mb.payId} mb={mb} onEdit={() => setEditing(mb.bill)} />)}</div>
         </Card>
-      )}
-      {cal?.familyBills && (
+      ))}
+      <p className="tiny faint" style={{ textAlign: 'center' }}>Type what you paid and tick it. Ticks reset on the 1st; past months stay in the history. Tap a bill’s name to edit it.</p>
+      {cal?.familyBills && family.length > 0 && (
         <Card title="Family bills (HomeHub)">
-          {!family.length && <div className="empty">None this month.</div>}
           <div className="list">
             {family.map((f) => (
               <div className="list-row" key={f.id + f.date}>
@@ -143,7 +131,7 @@ function BillsTab() {
           </div>
         </Card>
       )}
-      {editing && <BillEditor bill={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && <BillEditor bill={editing === 'new' ? null : editing} groups={groups} onClose={() => setEditing(null)} />}
     </>
   );
 }

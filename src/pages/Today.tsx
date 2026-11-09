@@ -33,7 +33,7 @@ export default function TodayPage() {
       </div>
       {dietActive() && <Card title="🥋 Winter Arc" action={<More to="/health">Details</More>} className="diet-hero"><MiniQuests /></Card>}
       <div className="grid-2">
-        <Card title="Bills due" action={<More to="/money">Money</More>}><BillsDue /></Card>
+        <Card title="Bills this month" action={<More to="/money">Pay</More>}><BillsDue /></Card>
         <Card title="To-dos" action={<More to="/todos" />}><TodoPreview /></Card>
       </div>
       <TflCard compact />

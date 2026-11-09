@@ -42,7 +42,7 @@ export function useAgenda(from: string, to: string, refreshMs?: number, bump = 0
     for (let d = parseKey(from); keyOf(d) <= to; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
       const y = d.getFullYear(), m = d.getMonth() + 1;
       for (const b of bills) {
-        if (!dueInMonth(b, y, m)) continue;
+        if (!dueInMonth(b, y, m) || b.dueDay === null) continue; // "any time this month" bills stay off the calendar
         const day = dueDate(b, y, m);
         if (day < from || day > to) continue;
         const paid = !!data.billPayments[`${b.id}:${day.slice(0, 7)}`];

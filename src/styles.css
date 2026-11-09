@@ -304,3 +304,18 @@ input[type=checkbox] { width: auto; }
   .board-clock { grid-column: 1 / -1; }
 }
 @media (max-width: 599px) { .board { grid-template-columns: 1fr; padding: 1rem 16px; } }
+
+/* ── Bill amount field ── */
+.amount-input {
+  display: flex; align-items: center; gap: 0.15rem; width: 6.2rem; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 0.6rem; padding: 0 0.5rem; background: rgba(255,255,255,.04);
+}
+.amount-input span { color: var(--faint); font-weight: 700; }
+.amount-input input { border: none; background: none; padding: 0.5rem 0; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.amount-input:focus-within { border-color: var(--teal); }
+.amount-input.need { border-color: var(--orange); }
+.amount-input.paid { border-color: rgba(74,222,128,.4); }
+.amount-input input:disabled { opacity: .7; }
+.group-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0.9rem 0 0.1rem; }
+.group-head:first-child { margin-top: 0; }
+.group-head h3 { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
