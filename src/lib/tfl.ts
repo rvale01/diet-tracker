@@ -13,6 +13,11 @@ export const LINE_COLORS: Record<string, string> = {
 export const lineColor = (id: string) => LINE_COLORS[id] ?? '#64748b';
 export const MODES = 'tube,elizabeth-line,overground,dlr,tram';
 
+/** Your lines: shown first, in this order, and the default until you pick others in Settings. */
+export const FAVOURITE_LINES = ['elizabeth', 'dlr'];
+const rank = (id: string) => { const i = FAVOURITE_LINES.indexOf(id); return i < 0 ? FAVOURITE_LINES.length : i; };
+export const byFavourite = <T extends { id: string }>(list: T[]) => [...list].sort((a, b) => rank(a.id) - rank(b.id));
+
 export async function fetchStatuses(): Promise<LineStatus[]> {
   const raw = await api<any[]>(`/api/tfl?path=${encodeURIComponent(`/Line/Mode/${MODES}/Status`)}`);
   return raw.map((l) => {
