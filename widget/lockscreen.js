@@ -130,29 +130,30 @@ function row(w, symbol, left, right, bold) {
 }
 
 function rectangular(w, d) {
-  // Frosted backing (like Apple's own widgets) so it reads over any wallpaper.
-  // Lines evenly spaced and centred vertically.
+  // The frosted plate fills the whole slot (no space around it);
+  // the text sits in an inner box with padding on every side.
   w.addAccessoryWidgetBackground = true;
-  w.setPadding(0, 16, 0, 16);
-  w.addSpacer();
-  if (!d.tube) row(w, null, 'TfL unavailable', null, true);
+  w.setPadding(0, 0, 0, 0);
+  const box = w.addStack();
+  box.layoutVertically();
+  box.setPadding(7, 14, 7, 14);
+  const gap = () => box.addSpacer(3);
+  if (!d.tube) row(box, null, 'TfL unavailable', null, true);
   else {
     const bad = d.tube.filter((l) => !l.good);
-    if (!bad.length) row(w, null, d.tube.map((l) => l.name).join(' · '), 'Good', true);
-    else row(w, null, bad.map((l) => l.name).join(' · '), bad[0].status.replace(' Service', ''), true);
+    if (!bad.length) row(box, null, d.tube.map((l) => l.name).join(' · '), 'Good', true);
+    else row(box, null, bad.map((l) => l.name).join(' · '), bad[0].status.replace(' Service', ''), true);
   }
-  const gap = () => w.addSpacer(3);
-  if (!d.events) { gap(); row(w, 'calendar', 'Calendar unavailable'); }
-  else if (!d.events.length) { gap(); row(w, 'checkmark', 'Free for the rest of today'); }
+  if (!d.events) { gap(); row(box, 'calendar', 'Calendar unavailable'); }
+  else if (!d.events.length) { gap(); row(box, 'checkmark', 'Free for the rest of today'); }
   else {
     d.events.slice(0, 2).forEach((e, i) => {
       gap();
       const more = i === 1 && d.events.length > 2 ? `+${d.events.length - 2}` : null;
-      row(w, e.allDay ? 'pin' : 'clock', e.allDay ? e.title : `${e.time}  ${e.title}`, more);
+      row(box, e.allDay ? 'pin' : 'clock', e.allDay ? e.title : `${e.time}  ${e.title}`, more);
     });
-    if (d.events.length === 1) { gap(); row(w, 'checkmark', 'Nothing else today'); }
+    if (d.events.length === 1) { gap(); row(box, 'checkmark', 'Nothing else today'); }
   }
-  w.addSpacer();
 }
 
 function circular(w, d) {
