@@ -47,7 +47,7 @@ export default function BoardPage() {
       <Card title="Coming up"><div className="scroll"><Agenda days={[t, addDays(t, 1), addDays(t, 2)]} byDay={byDay} /></div></Card>
       <WeatherCard big />
       {dietActive() ? <Card title="🥋 Winter Arc" className="diet-hero"><MiniQuests /></Card> : <Card title="To-dos"><div className="scroll"><TodoPreview limit={6} /></div></Card>}
-      <Card title="Bills due"><div className="scroll"><BillsDue days={10} hideAmount /></div></Card>
+      <Card title="Bills this month"><div className="scroll"><BillsDue hideAmount /></div></Card>
       {dietActive() && <Card title="To-dos"><div className="scroll"><TodoPreview limit={6} /></div></Card>}
       <TflCard compact />
     </div>
