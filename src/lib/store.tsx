@@ -5,7 +5,9 @@ import { api, AuthError, getToken, setToken } from './api';
 import type { Collection, Data, Settings } from './types';
 
 const EMPTY: Data = { settings: {}, meta: {}, dietDays: {}, sessions: {}, weights: {}, bills: {}, billPayments: {}, todos: {}, expenses: {} };
-const POLL_MS = 8000;
+// Check for changes from other devices. The kitchen board runs all day, so it checks less often
+// to stay well inside the database's free plan (shared with HomeHub). Hidden tabs don't check.
+const pollMs = () => (location.pathname.startsWith('/board') ? 60_000 : 10_000);
 
 interface Write { col: Collection; id: string; value: unknown }
 type Item<C extends Collection> = Data[C] extends Record<string, infer V> ? V : never;
@@ -62,7 +64,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === 'signed-out') return;
     if (status === 'loading') loadAll();
-    const t = setInterval(check, POLL_MS);
+    const t = setInterval(() => document.visibilityState === 'visible' && check(), pollMs());
     const onVis = () => document.visibilityState === 'visible' && check();
     document.addEventListener('visibilitychange', onVis);
     window.addEventListener('focus', onVis);
