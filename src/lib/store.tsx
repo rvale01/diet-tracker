@@ -19,6 +19,7 @@ interface Ctx {
   putMany: (writes: Write[]) => void;
   saveSettings: (patch: Partial<Settings>) => void;
   signedIn: () => void;
+  retry: () => void;
   signOut: () => void;
 }
 
@@ -102,8 +103,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => ({
     status, error, data, settings, put, putMany, saveSettings,
     signedIn: () => setStatus('loading'),
+    retry: () => { setError(null); loadAll(); },
     signOut: () => { setToken(null); setData(EMPTY); setStatus('signed-out'); },
-  }), [status, error, data, settings, put, putMany, saveSettings]);
+  }), [status, error, data, settings, put, putMany, saveSettings, loadAll]);
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }

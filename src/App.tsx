@@ -13,7 +13,7 @@ import TodayPage from './pages/Today';
 import TodosPage from './pages/Todos';
 
 export default function App() {
-  const { status, data, putMany } = useStore();
+  const { status, data, putMany, error, retry, signOut } = useStore();
 
   useEffect(() => {
     if (status !== 'ready') return;
@@ -23,7 +23,21 @@ export default function App() {
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'signed-out') return <LoginPage />;
-  if (status === 'loading') return <div className="login"><div className="muted">Loading…</div></div>;
+  if (status === 'loading') {
+    return (
+      <div className="login">
+        {error ? (
+          <div className="card">
+            <div style={{ fontSize: '2rem' }}>⚠️</div>
+            <div className="bold">Couldn't load your dashboard</div>
+            <div className="error-banner">{error}</div>
+            <button className="btn primary" onClick={retry}>Try again</button>
+            <button className="btn" onClick={signOut}>Sign out</button>
+          </div>
+        ) : <div className="muted">Loading…</div>}
+      </div>
+    );
+  }
   return (
     <Routes>
       <Route path="/board" element={<BoardPage />} />

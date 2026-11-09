@@ -8,12 +8,17 @@ export const setToken = (t: string | null) => {
 export class AuthError extends Error {}
 
 export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15_000);
   const res = await fetch(path, {
+    signal: ctrl.signal,
     method: init?.method ?? (init?.body ? 'POST' : 'GET'),
     headers: { 'content-type': 'application/json', authorization: `Bearer ${getToken() ?? ''}` },
     body: init?.body ? JSON.stringify(init.body) : undefined,
     cache: 'no-store',
-  });
+  }).catch((e) => {
+    throw new Error(e?.name === 'AbortError' ? 'The server took too long to answer. Check your connection.' : 'No connection to the server.');
+  }).finally(() => clearTimeout(timer));
   const json = await res.json().catch(() => ({}));
   if (res.status === 401) throw new AuthError(json.error ?? 'Please sign in again.');
   if (!res.ok) throw new Error(json.error ?? `Error ${res.status}`);
