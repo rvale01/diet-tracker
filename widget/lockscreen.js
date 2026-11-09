@@ -189,6 +189,7 @@ async function build(family = config.widgetFamily || 'accessoryRectangular') {
   const d = await loadAll();
   if (d.error) {
     if (!family.startsWith('accessory')) w.backgroundColor = BG;
+    else if (family !== 'accessoryInline') w.addAccessoryWidgetBackground = true;
     text(w, d.error, Font.boldSystemFont(15));
     return w;
   }
