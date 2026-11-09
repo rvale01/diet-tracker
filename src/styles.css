@@ -21,7 +21,7 @@
   color-scheme: dark;
 }
 
-html, body { background: var(--bg); }
+html, body { background: var(--bg); overflow-x: hidden; }
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
@@ -92,12 +92,13 @@ input[type=checkbox] { width: auto; }
 }
 
 /* ── Cards ── */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; }
+.card { min-width: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; }
 .card-title { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.8rem; }
 .card-title h2 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .card-title a, .card-title .link { font-size: 0.8rem; font-weight: 600; color: var(--teal); }
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+.grid-2 > * { min-width: 0; }
+@media (min-width: 640px) { .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
 .empty { color: var(--faint); font-size: 0.88rem; padding: 0.4rem 0; }
 .error-banner { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.4); color: #fecaca; border-radius: 0.8rem; padding: 0.6rem 0.8rem; font-size: 0.85rem; }
@@ -113,6 +114,7 @@ input[type=checkbox] { width: auto; }
 .btn.danger { color: var(--red); }
 .btn.small { padding: 0.4rem 0.7rem; font-size: 0.8rem; border-radius: 0.6rem; }
 .btn:disabled { opacity: .45; }
+.btn.primary:disabled { background: var(--card-2); color: var(--faint); border: 1px solid var(--border); opacity: 1; }
 .btn:active:not(:disabled) { transform: scale(0.97); }
 .icon-btn { width: 2.2rem; height: 2.2rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
 .icon-btn:active { background: var(--card-2); }
@@ -130,7 +132,7 @@ input[type=checkbox] { width: auto; }
 
 /* ── List rows ── */
 .list { display: flex; flex-direction: column; }
-.list-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.list-row { min-width: 0; display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,.05); }
 .list-row:last-child { border-bottom: none; }
 .list-row .ico { font-size: 1.25rem; width: 1.9rem; text-align: center; flex-shrink: 0; }
 .check {
@@ -162,7 +164,7 @@ input[type=checkbox] { width: auto; }
 .login img { width: 64px; height: 64px; margin: 0 auto; border-radius: 16px; }
 
 /* ── Today ── */
-.hero h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+.hero h1 { font-size: clamp(1.5rem, 6.5vw, 1.9rem); font-weight: 800; letter-spacing: -0.02em; }
 .hero .date { color: var(--muted); margin-top: 0.15rem; }
 
 .weather-now { display: flex; align-items: center; gap: 0.9rem; }
