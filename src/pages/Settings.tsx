@@ -4,7 +4,7 @@ import { Card, PageHead } from '../components/ui';
 import { clearCalendarCache, useCalendar } from '../lib/calendar';
 import { todayKey, uid } from '../lib/dates';
 import { useStore } from '../lib/store';
-import { expandStop, fetchStatuses, lineColor, searchStops, usePoll } from '../lib/tfl';
+import { byFavourite, expandStop, fetchStatuses, FAVOURITE_LINES, lineColor, searchStops, usePoll } from '../lib/tfl';
 import type { CalendarFeed, TflStop } from '../lib/types';
 import { searchPlaces } from '../lib/weather';
 
@@ -70,7 +70,8 @@ function CalendarsCard() {
 
 function TflSettings() {
   const { settings, saveSettings } = useStore();
-  const tfl = settings.tfl ?? { lines: [], stops: [] };
+  const saved = settings.tfl ?? { lines: [], stops: [] };
+  const tfl = { ...saved, lines: saved.lines?.length ? saved.lines : FAVOURITE_LINES };
   const { data: lines } = usePoll(fetchStatuses, 600_000, []);
   const [q, setQ] = useState('');
   const [results, setResults] = useState<TflStop[] | null>(null);
@@ -95,7 +96,7 @@ function TflSettings() {
       <div id="tfl" className="stack">
         <div className="small muted">Pick the lines you use. Others only show when they have problems.</div>
         <div className="row wrap" style={{ gap: '0.35rem' }}>
-          {(lines ?? []).map((l) => (
+          {byFavourite(lines ?? []).map((l) => (
             <button key={l.id} className={`chip ${tfl.lines.includes(l.id) ? 'blue' : ''}`} onClick={() => toggleLine(l.id)} style={{ padding: '0.35rem 0.65rem' }}>
               <i className="dot" style={{ background: lineColor(l.id) }} />{l.name}
             </button>
