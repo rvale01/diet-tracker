@@ -1,23 +1,22 @@
 // ── Dashboard · Lock Screen widget (Scriptable) ──────────────
-// Today's appointments, your tube lines and the weather, on your Lock Screen.
+// Today's appointments and your tube lines, on your Lock Screen.
 //
 // 1. In Scriptable tap +, paste this whole file and name it "Dashboard".
 // 2. Tap ▶ once: it asks for your dashboard password (stored in the iOS Keychain).
 // 3. Lock Screen → long-press → Customise → Lock Screen → tap the widget area →
 //    Scriptable → pick the wide (rectangular) one → tap it → Script: Dashboard.
-//    The round one shows the weather; the one-line one (above the clock) shows a summary.
-// Lines and weather location come from the app's Settings (default: Elizabeth line + DLR, London).
+//    The round one shows your next appointment; the one-line one (above the clock) shows a summary.
+// Lines come from the app's Settings (default: Elizabeth line + DLR).
 // Tapping the widget opens the dashboard. iOS refreshes Lock Screen widgets every ~15–30 minutes.
 // ─────────────────────────────────────────────────────────────
 
 const SITE = 'https://diet-tracker-hazel.vercel.app';
 const KEY = 'dashboard.token';
 const DEFAULT_LINES = ['elizabeth', 'dlr'];
-const DEFAULT_PLACE = { name: 'London', lat: 51.5074, lon: -0.1278 };
 const SHORT = { elizabeth: 'Elizabeth', dlr: 'DLR', 'hammersmith-city': 'H&C', 'waterloo-city': 'W&C' };
-// Dark text. On the Lock Screen iOS may still tint widgets to match the clock; the Home Screen version always uses it.
-const INK = new Color('#0f172a');
-const PAPER = new Color('#f8fafc');
+// Bright white text so it reads over a busy wallpaper.
+const INK = Color.white();
+const BG = new Color('#0b1120');
 
 // ── Sign-in and requests ─────────────────────────────────────
 async function signIn() {
@@ -57,22 +56,6 @@ const pad = (n) => String(n).padStart(2, '0');
 const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-// ── Weather (Open-Meteo, no key needed) ──────────────────────
-const WX = [[[0], '☀️'], [[1], '🌤️'], [[2], '⛅'], [[3], '☁️'], [[45, 48], '🌫️'], [[51, 53, 55, 56, 57], '🌦️'],
-  [[61, 63, 66, 80, 81], '🌧️'], [[65, 67, 82], '🌧️'], [[71, 73, 75, 77, 85, 86], '🌨️'], [[95, 96, 99], '⛈️']];
-const wxIcon = (code, isDay) => (!isDay && code <= 1 ? '🌙' : (WX.find(([c]) => c.includes(code)) || [0, '🌡️'])[1]);
-
-async function weather(place) {
-  const u = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=1`
-    + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max';
-  const j = await new Request(u).loadJSON();
-  return {
-    temp: Math.round(j.current.temperature_2m), icon: wxIcon(j.current.weather_code, j.current.is_day),
-    max: Math.round(j.daily.temperature_2m_max[0]), min: Math.round(j.daily.temperature_2m_min[0]),
-    rain: j.daily.precipitation_probability_max[0] || 0,
-  };
-}
-
 // ── Tube lines ───────────────────────────────────────────────
 async function lines(ids) {
   const raw = await api(`/api/tfl?path=${encodeURIComponent(`/Line/${ids.join(',')}/Status`)}`);
@@ -102,12 +85,11 @@ async function loadAll() {
     const all = await api('/api/data', { op: 'all' });
     const settings = (all.data && all.data.settings && all.data.settings.main) || {};
     const ids = settings.tfl && settings.tfl.lines && settings.tfl.lines.length ? settings.tfl.lines : DEFAULT_LINES;
-    const [wx, tube, events] = await Promise.all([
-      weather(settings.weather || DEFAULT_PLACE).catch(() => null),
+    const [tube, events] = await Promise.all([
       lines(ids).catch(() => null),
       appointments(now).catch(() => null),
     ]);
-    return { wx, tube, events, place: (settings.weather || DEFAULT_PLACE).name.split(',')[0] };
+    return { tube, events };
   } catch (e) {
     if (e instanceof SignedOut) { Keychain.remove(KEY); return { error: 'Open Scriptable to sign in' }; }
     return { error: 'Offline' };
@@ -115,16 +97,15 @@ async function loadAll() {
 }
 
 // ── Text helpers ─────────────────────────────────────────────
-function text(stack, str, font, opacity = 1) {
+function text(stack, str, font) {
   const t = stack.addText(str);
   t.font = font;
   t.textColor = INK;
-  t.textOpacity = opacity;
+  t.textOpacity = 1;
   t.lineLimit = 1;
   t.minimumScaleFactor = 0.7;
   return t;
 }
-const wxLine = (wx) => (wx ? `${wx.icon} ${wx.temp}°` : '🌡️ –');
 function tubeLine(tube) {
   if (!tube) return '🚇 TfL unavailable';
   const bad = tube.filter((l) => !l.good);
@@ -135,50 +116,49 @@ const eventLine = (e) => `${e.time === 'All day' ? '📌' : e.time} ${e.title}`;
 
 // ── Layouts ──────────────────────────────────────────────────
 function rectangular(w, d) {
-  // Three big lines spread over the whole widget height.
+  // Three bold white lines spread over the whole widget height.
   w.setPadding(0, 0, 0, 0);
-  text(w, `${wxLine(d.wx)} · ${tubeLine(d.tube)}`, Font.boldSystemFont(17));
+  text(w, tubeLine(d.tube), Font.heavySystemFont(16));
   w.addSpacer();
-  if (!d.events) text(w, 'Calendar unavailable', Font.semiboldSystemFont(16));
-  else if (!d.events.length) text(w, 'No more appointments', Font.semiboldSystemFont(16));
+  if (!d.events) text(w, 'Calendar unavailable', Font.boldSystemFont(16));
+  else if (!d.events.length) text(w, 'No more appointments today', Font.boldSystemFont(16));
   else {
     const extra = d.events.length - 2;
     d.events.slice(0, 2).forEach((e, i) => {
       if (i) w.addSpacer();
-      text(w, eventLine(e) + (i === 1 && extra > 0 ? `  +${extra}` : ''), Font.semiboldSystemFont(16));
+      text(w, eventLine(e) + (i === 1 && extra > 0 ? `  +${extra}` : ''), Font.boldSystemFont(16));
     });
-    if (d.events.length === 1) { w.addSpacer(); text(w, 'Nothing else today', Font.systemFont(14), 0.7); }
+    if (d.events.length === 1) { w.addSpacer(); text(w, 'Nothing else today', Font.semiboldSystemFont(14)); }
   }
 }
 
 function circular(w, d) {
+  // Next appointment time, or ✓ when the day is free.
   w.addAccessoryWidgetBackground = true;
+  const next = d.events && d.events.find((e) => !e.allDay);
   w.addSpacer();
-  const r1 = w.addStack(); r1.addSpacer(); text(r1, d.wx ? d.wx.icon : '🌡️', Font.systemFont(20)); r1.addSpacer();
-  const r2 = w.addStack(); r2.addSpacer(); text(r2, d.wx ? `${d.wx.temp}°` : '–', Font.boldSystemFont(18)); r2.addSpacer();
+  const r1 = w.addStack(); r1.addSpacer(); text(r1, next ? next.time : '✓', Font.heavySystemFont(next ? 15 : 22)); r1.addSpacer();
+  const r2 = w.addStack(); r2.addSpacer(); text(r2, next ? 'next' : 'free', Font.boldSystemFont(10)); r2.addSpacer();
   w.addSpacer();
 }
 
 function inline(w, d) {
   const bad = d.tube ? d.tube.filter((l) => !l.good).length : 0;
-  const ev = d.events ? (d.events.length ? `${d.events.length} today` : 'free day') : '';
-  text(w, `${wxLine(d.wx)} · ${d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''}` : '🚇 ✓') : ''} · ${ev}`, Font.semiboldSystemFont(14));
+  const tube = d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''} delayed` : '🚇 Lines good') : '🚇 –';
+  const next = d.events && d.events[0];
+  text(w, `${tube} · ${next ? eventLine(next) : 'Free day'}`, Font.boldSystemFont(14));
 }
 
 function homeScreen(w, d, family) {
-  // Light background with dark text, spread over the full height.
-  w.backgroundColor = PAPER;
-  const big = family !== 'small';
-  text(w, d.wx ? `${d.wx.icon} ${d.wx.temp}°  ${d.place}` : `🌡️ ${d.place}`, Font.boldSystemFont(big ? 20 : 17));
-  if (d.wx) text(w, `↑${d.wx.max}° ↓${d.wx.min}° · ☔ ${d.wx.rain}%`, Font.mediumSystemFont(13), 0.7);
+  w.backgroundColor = BG;
+  if (d.tube) d.tube.forEach((l) => text(w, `${l.good ? '🟢' : '🟠'} ${l.name}: ${l.status}`, Font.boldSystemFont(15)));
+  else text(w, '🚇 TfL unavailable', Font.boldSystemFont(15));
   w.addSpacer();
-  if (d.tube) d.tube.forEach((l) => text(w, `${l.good ? '🟢' : '🟠'} ${l.name}: ${l.status}`, Font.semiboldSystemFont(14)));
-  else text(w, '🚇 TfL unavailable', Font.systemFont(14), 0.7);
+  const max = family === 'small' ? 3 : family === 'large' ? 9 : 4;
+  if (!d.events) text(w, 'Calendar unavailable', Font.semiboldSystemFont(15));
+  else if (!d.events.length) text(w, 'No more appointments today', Font.semiboldSystemFont(15));
+  else d.events.slice(0, max).forEach((e) => text(w, eventLine(e), Font.semiboldSystemFont(15)));
   w.addSpacer();
-  const max = family === 'small' ? 2 : family === 'large' ? 8 : 3;
-  if (!d.events) text(w, 'Calendar unavailable', Font.systemFont(14), 0.7);
-  else if (!d.events.length) text(w, 'No more appointments today', Font.mediumSystemFont(14), 0.7);
-  else d.events.slice(0, max).forEach((e) => text(w, eventLine(e), Font.semiboldSystemFont(14)));
 }
 
 async function build(family = config.widgetFamily || 'accessoryRectangular') {
@@ -187,8 +167,8 @@ async function build(family = config.widgetFamily || 'accessoryRectangular') {
   w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   const d = await loadAll();
   if (d.error) {
-    if (!family.startsWith('accessory')) w.backgroundColor = PAPER;
-    text(w, d.error, Font.semiboldSystemFont(15));
+    if (!family.startsWith('accessory')) w.backgroundColor = BG;
+    text(w, d.error, Font.boldSystemFont(15));
     return w;
   }
   if (family === 'accessoryInline') inline(w, d);
