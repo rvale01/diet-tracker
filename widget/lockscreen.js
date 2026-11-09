@@ -133,7 +133,7 @@ function rectangular(w, d) {
   // Frosted backing (like Apple's own widgets) so it reads over any wallpaper.
   // Lines evenly spaced and centred vertically.
   w.addAccessoryWidgetBackground = true;
-  w.setPadding(4, 10, 4, 10);
+  w.setPadding(0, 16, 0, 16);
   w.addSpacer();
   if (!d.tube) row(w, null, 'TfL unavailable', null, true);
   else {
