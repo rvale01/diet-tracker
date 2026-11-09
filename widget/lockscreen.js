@@ -106,29 +106,50 @@ function text(stack, str, font) {
   t.minimumScaleFactor = 0.7;
   return t;
 }
-function tubeLine(tube) {
-  if (!tube) return '🚇 TfL unavailable';
-  const bad = tube.filter((l) => !l.good);
-  if (!bad.length) return `🚇 ${tube.map((l) => l.name).join(' & ')} good`;
-  return `⚠️ ${bad.map((l) => `${l.name}: ${l.status}`).join(' · ')}`;
-}
 const eventLine = (e) => `${e.time === 'All day' ? '📌' : e.time} ${e.title}`;
 
 // ── Layouts ──────────────────────────────────────────────────
+// A small Apple icon (SF Symbol), drawn cleanly by iOS on the Lock Screen.
+function icon(stack, name, size) {
+  const img = stack.addImage(SFSymbol.named(name).image);
+  img.imageSize = new Size(size, size);
+  img.tintColor = INK;
+  return img;
+}
+
+function row(w, symbol, left, right, bold) {
+  const r = w.addStack();
+  r.layoutHorizontally();
+  r.centerAlignContent();
+  r.spacing = 5;
+  if (symbol) icon(r, symbol, 12);
+  const t = text(r, left, bold ? Font.boldSystemFont(14) : Font.semiboldSystemFont(14));
+  t.lineLimit = 1;
+  if (right && right.icon) { r.addSpacer(); icon(r, right.icon, 13); }
+  else if (right) { r.addSpacer(); text(r, right, Font.boldSystemFont(13)); }
+  return r;
+}
+
 function rectangular(w, d) {
-  // Three bold white lines spread over the whole widget height.
-  w.setPadding(0, 0, 0, 0);
-  text(w, tubeLine(d.tube), Font.heavySystemFont(16));
-  w.addSpacer();
-  if (!d.events) text(w, 'Calendar unavailable', Font.boldSystemFont(16));
-  else if (!d.events.length) text(w, 'No more appointments today', Font.boldSystemFont(16));
+  // Frosted backing (like Apple's own widgets) so it reads over any wallpaper.
+  w.addAccessoryWidgetBackground = true;
+  w.setPadding(6, 10, 6, 10);
+  if (!d.tube) row(w, 'tram.fill', 'TfL unavailable', null, true);
   else {
-    const extra = d.events.length - 2;
+    const bad = d.tube.filter((l) => !l.good);
+    if (!bad.length) row(w, 'tram.fill', d.tube.map((l) => l.name).join(' · '), { icon: 'checkmark.circle.fill' }, true);
+    else row(w, 'exclamationmark.triangle.fill', bad.map((l) => l.name).join(' · '), bad[0].status.replace(' Service', ''), true);
+  }
+  w.addSpacer();
+  if (!d.events) row(w, 'calendar', 'Calendar unavailable');
+  else if (!d.events.length) row(w, 'calendar', 'Free for the rest of today');
+  else {
     d.events.slice(0, 2).forEach((e, i) => {
-      if (i) w.addSpacer();
-      text(w, eventLine(e) + (i === 1 && extra > 0 ? `  +${extra}` : ''), Font.boldSystemFont(16));
+      if (i) w.addSpacer(2);
+      const more = i === 1 && d.events.length > 2 ? `+${d.events.length - 2}` : null;
+      row(w, e.allDay ? 'pin.fill' : 'clock', e.allDay ? e.title : `${e.time}  ${e.title}`, more);
     });
-    if (d.events.length === 1) { w.addSpacer(); text(w, 'Nothing else today', Font.semiboldSystemFont(14)); }
+    if (d.events.length === 1) { w.addSpacer(2); row(w, 'checkmark', 'Nothing else today'); }
   }
 }
 
@@ -144,9 +165,9 @@ function circular(w, d) {
 
 function inline(w, d) {
   const bad = d.tube ? d.tube.filter((l) => !l.good).length : 0;
-  const tube = d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''} delayed` : '🚇 Lines good') : '🚇 –';
-  const next = d.events && d.events[0];
-  text(w, `${tube} · ${next ? eventLine(next) : 'Free day'}`, Font.boldSystemFont(14));
+  const tube = d.tube ? (bad ? `${bad} line${bad > 1 ? 's' : ''} delayed` : 'Lines good') : 'TfL –';
+  const next = d.events && d.events.find((e) => !e.allDay);
+  text(w, `${tube} · ${next ? `${next.time} ${next.title}` : 'Free day'}`, Font.boldSystemFont(14));
 }
 
 function homeScreen(w, d, family) {
