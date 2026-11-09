@@ -8,10 +8,11 @@ export const setToken = (t: string | null) => {
 export class AuthError extends Error {}
 
 export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15_000);
+  // Old Android browsers (photo frames) have no AbortController: skip the timeout there.
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => ctrl?.abort(), 15_000);
   const res = await fetch(path, {
-    signal: ctrl.signal,
+    signal: ctrl?.signal,
     method: init?.method ?? (init?.body ? 'POST' : 'GET'),
     headers: { 'content-type': 'application/json', authorization: `Bearer ${getToken() ?? ''}` },
     body: init?.body ? JSON.stringify(init.body) : undefined,
