@@ -176,8 +176,9 @@ export default function SettingsPage() {
       <WeatherSettings />
       <Card title="Kitchen board">
         <div className="stack">
-          <div className="small muted">Open this on the kitchen tablet, sign in once and add it to the Home Screen. It stays on, refreshes by itself and dims at night.</div>
+          <div className="small muted">Open this on the kitchen screen (a converted photo frame or a tablet) and sign in once. It stays on, refreshes by itself and dims at night.</div>
           <Link className="btn" to="/board">🖥️ Open the board</Link>
+          <a className="small" href="https://github.com/rvale01/diet-tracker/blob/claude/diet-tracker-website-g5ldM/docs/kitchen-frame.md" target="_blank" rel="noreferrer">📖 How to turn a £50 photo frame into the board →</a>
           <div className="form-grid">
             <div className="field"><label>Dim from</label>
               <select value={board.nightFrom} onChange={(e) => saveSettings({ board: { ...board, nightFrom: Number(e.target.value) } })}>{Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}</select>

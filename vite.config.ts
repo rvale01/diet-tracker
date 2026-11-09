@@ -1,3 +1,4 @@
+import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Connect, type Plugin } from 'vite';
 import { GET as calendar } from './api/calendar';
@@ -23,4 +24,11 @@ function localApi(): Plugin {
   return { name: 'local-api', configureServer: (s) => { s.middlewares.use(mw); }, configurePreviewServer: (s) => { s.middlewares.use(mw); } };
 }
 
-export default defineConfig({ plugins: [localApi(), react()] });
+export default defineConfig({
+  plugins: [
+    localApi(),
+    react(),
+    // Cheap Android photo frames ship an old built-in browser: also build a version that runs there.
+    legacy({ targets: ['chrome >= 49', 'android >= 5'], modernPolyfills: true }),
+  ],
+});
