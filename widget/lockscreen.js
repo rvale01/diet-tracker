@@ -1,19 +1,22 @@
 // ── Dashboard · Lock Screen widget (Scriptable) ──────────────
-// Shows this month's bills (and the Winter Arc day while it runs) on your Lock Screen.
+// Today's appointments, your tube lines and the weather, on your Lock Screen.
 //
 // 1. In Scriptable tap +, paste this whole file and name it "Dashboard".
 // 2. Tap ▶ once: it asks for your dashboard password (stored in the iOS Keychain).
 // 3. Lock Screen → long-press → Customise → Lock Screen → tap the widget area →
-//    Scriptable → pick the wide (rectangular) or round one → tap it → Script: Dashboard.
-// Tapping the widget opens the Money page. iOS refreshes Lock Screen widgets every ~15–30 minutes.
+//    Scriptable → pick the wide (rectangular) one → tap it → Script: Dashboard.
+//    The round one shows the weather; the one-line one (above the clock) shows a summary.
+// Lines and weather location come from the app's Settings (default: Elizabeth line + DLR, London).
+// Tapping the widget opens the dashboard. iOS refreshes Lock Screen widgets every ~15–30 minutes.
 // ─────────────────────────────────────────────────────────────
 
 const SITE = 'https://diet-tracker-hazel.vercel.app';
 const KEY = 'dashboard.token';
-const DIET_START = new Date(2026, 10, 9);   // Mon 9 Nov 2026
-const DIET_DAYS = 29;
+const DEFAULT_LINES = ['elizabeth', 'dlr'];
+const DEFAULT_PLACE = { name: 'London', lat: 51.5074, lon: -0.1278 };
+const SHORT = { elizabeth: 'Elizabeth', dlr: 'DLR', 'hammersmith-city': 'H&C', 'waterloo-city': 'W&C' };
 
-// ── Data ─────────────────────────────────────────────────────
+// ── Sign-in and requests ─────────────────────────────────────
 async function signIn() {
   const a = new Alert();
   a.title = 'Dashboard';
@@ -35,61 +38,80 @@ async function signIn() {
   return true;
 }
 
-async function loadData() {
-  if (!Keychain.contains(KEY)) return { error: 'Open Scriptable to sign in' };
-  const r = new Request(`${SITE}/api/data`);
-  r.method = 'POST';
+class SignedOut extends Error {}
+
+async function api(path, body) {
+  const r = new Request(`${SITE}${path}`);
   r.headers = { 'content-type': 'application/json', authorization: `Bearer ${Keychain.get(KEY)}` };
-  r.body = JSON.stringify({ op: 'all' });
+  if (body) { r.method = 'POST'; r.body = JSON.stringify(body); }
   r.timeoutInterval = 20;
+  const res = await r.loadJSON();
+  if (r.response && r.response.statusCode === 401) throw new SignedOut();
+  return res;
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+// ── Weather (Open-Meteo, no key needed) ──────────────────────
+const WX = [[[0], '☀️'], [[1], '🌤️'], [[2], '⛅'], [[3], '☁️'], [[45, 48], '🌫️'], [[51, 53, 55, 56, 57], '🌦️'],
+  [[61, 63, 66, 80, 81], '🌧️'], [[65, 67, 82], '🌧️'], [[71, 73, 75, 77, 85, 86], '🌨️'], [[95, 96, 99], '⛈️']];
+const wxIcon = (code, isDay) => (!isDay && code <= 1 ? '🌙' : (WX.find(([c]) => c.includes(code)) || [0, '🌡️'])[1]);
+
+async function weather(place) {
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=1`
+    + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max';
+  const j = await new Request(u).loadJSON();
+  return {
+    temp: Math.round(j.current.temperature_2m), icon: wxIcon(j.current.weather_code, j.current.is_day),
+    max: Math.round(j.daily.temperature_2m_max[0]), min: Math.round(j.daily.temperature_2m_min[0]),
+    rain: j.daily.precipitation_probability_max[0] || 0,
+  };
+}
+
+// ── Tube lines ───────────────────────────────────────────────
+async function lines(ids) {
+  const raw = await api(`/api/tfl?path=${encodeURIComponent(`/Line/${ids.join(',')}/Status`)}`);
+  return ids.map((id) => {
+    const l = (raw || []).find((x) => x.id === id);
+    const worst = l ? [...(l.lineStatuses || [])].sort((a, b) => a.statusSeverity - b.statusSeverity)[0] : null;
+    return { id, name: SHORT[id] || (l ? l.name : id), good: !worst || worst.statusSeverity >= 10, status: worst ? worst.statusSeverityDescription : '?' };
+  });
+}
+
+// ── Today's appointments ─────────────────────────────────────
+async function appointments(now) {
+  const t = keyOf(now);
+  const res = await api(`/api/calendar?from=${t}&to=${t}`);
+  return (res.events || []).filter((e) => {
+    if (e.allDay) return e.start <= t && (!e.end || e.end > t);
+    const end = new Date(e.end || e.start);
+    return keyOf(new Date(e.start)) <= t && end > now; // still to come or happening now
+  }).map((e) => ({ title: e.title, time: e.allDay ? 'All day' : hhmm(new Date(e.start)), allDay: e.allDay }))
+    .sort((a, b) => (a.allDay === b.allDay ? a.time.localeCompare(b.time) : a.allDay ? -1 : 1));
+}
+
+async function loadAll() {
+  if (!Keychain.contains(KEY)) return { error: 'Open Scriptable to sign in' };
+  const now = new Date();
   try {
-    const res = await r.loadJSON();
-    if (r.response && r.response.statusCode === 401) { Keychain.remove(KEY); return { error: 'Open Scriptable to sign in' }; }
-    if (!res.data) return { error: res.error || 'No data' };
-    return { data: res.data };
+    const all = await api('/api/data', { op: 'all' });
+    const settings = (all.data && all.data.settings && all.data.settings.main) || {};
+    const ids = settings.tfl && settings.tfl.lines && settings.tfl.lines.length ? settings.tfl.lines : DEFAULT_LINES;
+    const [wx, tube, events] = await Promise.all([
+      weather(settings.weather || DEFAULT_PLACE).catch(() => null),
+      lines(ids).catch(() => null),
+      appointments(now).catch(() => null),
+    ]);
+    return { wx, tube, events, place: (settings.weather || DEFAULT_PLACE).name.split(',')[0] };
   } catch (e) {
+    if (e instanceof SignedOut) { Keychain.remove(KEY); return { error: 'Open Scriptable to sign in' }; }
     return { error: 'Offline' };
   }
 }
 
-// ── Same rules as the app ────────────────────────────────────
-const pad = (n) => String(n).padStart(2, '0');
-const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const money = (n) => '£' + Math.round(n).toLocaleString('en-GB');
-
-function bills(data, now) {
-  const y = now.getFullYear(), m = now.getMonth() + 1;
-  const list = Object.values(data.bills || {}).filter((b) => {
-    if (!b.active) return false;
-    const made = new Date(b.createdAt);
-    if (y * 12 + m < made.getFullYear() * 12 + made.getMonth() + 1) return false;
-    if (b.frequency === 'monthly') return true;
-    const diff = (m - b.startMonth + 12) % 12;
-    return b.frequency === 'quarterly' ? diff % 3 === 0 : diff === 0;
-  }).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-  const payments = data.billPayments || {};
-  const paid = list.filter((b) => payments[`${b.id}:${y}-${pad(m)}`]);
-  const left = list.filter((b) => !payments[`${b.id}:${y}-${pad(m)}`]);
-  const total = paid.reduce((s, b) => s + (payments[`${b.id}:${y}-${pad(m)}`].amount || 0), 0);
-  return { count: list.length, paid: paid.length, left, total };
-}
-
-function diet(data, now) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const n = Math.round((today - DIET_START) / 86400000) + 1;
-  if (n < 1 || n > DIET_DAYS) return null;
-  const d = (data.dietDays || {})[keyOf(today)] || {};
-  const glutenFree = n >= 8;
-  let s = 0;
-  if (d.sugar) s++;
-  if (glutenFree && d.gluten) s++;
-  if (d.protein) s++;
-  if ((d.water || 0) >= 8) s++;
-  if ((d.sleep || 0) >= 7) s++;
-  return { day: n, score: s, max: glutenFree ? 5 : 4 };
-}
-
-// ── Widgets ──────────────────────────────────────────────────
+// ── Text helpers ─────────────────────────────────────────────
 function text(stack, str, font, opacity = 1) {
   const t = stack.addText(str);
   t.font = font;
@@ -98,91 +120,77 @@ function text(stack, str, font, opacity = 1) {
   t.minimumScaleFactor = 0.7;
   return t;
 }
-
-function rectangular(w, b, dt) {
-  text(w, `💷 Bills ${b.paid}/${b.count} · ${money(b.total)}`, Font.boldSystemFont(14));
-  const names = b.left.map((x) => x.name);
-  const leftLine = !b.count ? 'No bills yet'
-    : !b.left.length ? 'All paid this month ✓'
-    : `Left: ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` +${names.length - 3}` : ''}`;
-  text(w, leftLine, Font.systemFont(12), 0.85);
-  if (dt) text(w, `🥋 Day ${dt.day}/${DIET_DAYS} · quests ${dt.score}/${dt.max}`, Font.systemFont(12), 0.85);
+const wxLine = (wx) => (wx ? `${wx.icon} ${wx.temp}°` : '🌡️ –');
+function tubeLine(tube) {
+  if (!tube) return '🚇 TfL unavailable';
+  const bad = tube.filter((l) => !l.good);
+  if (!bad.length) return `🚇 ${tube.map((l) => l.name).join(' & ')} good`;
+  return `⚠️ ${bad.map((l) => `${l.name}: ${l.status}`).join(' · ')}`;
 }
+const eventLine = (e) => `${e.time === 'All day' ? '📌' : e.time} ${e.title}`;
 
-function circular(w, b) {
-  const size = 60, lineW = 5;
-  const ctx = new DrawContext();
-  ctx.size = new Size(size, size);
-  ctx.opaque = false;
-  ctx.respectScreenScale = true;
-  const r = (size - lineW) / 2, c = size / 2;
-  const arc = (from, to, alpha) => {
-    const p = new Path();
-    const steps = Math.max(2, Math.ceil((to - from) * 60));
-    for (let i = 0; i <= steps; i++) {
-      const a = -Math.PI / 2 + 2 * Math.PI * (from + ((to - from) * i) / steps);
-      const pt = new Point(c + r * Math.cos(a), c + r * Math.sin(a));
-      i ? p.addLine(pt) : p.move(pt);
-    }
-    ctx.addPath(p);
-    ctx.setStrokeColor(new Color('#ffffff', alpha));
-    ctx.setLineWidth(lineW);
-    ctx.strokePath();
-  };
-  arc(0, 1, 0.25);
-  if (b.count && b.paid) arc(0, b.paid / b.count, 1);
-  w.backgroundImage = ctx.getImage();
-  w.addSpacer();
-  const row = w.addStack(); row.addSpacer();
-  text(row, `${b.paid}/${b.count}`, Font.boldSystemFont(15)).centerAlignText();
-  row.addSpacer();
-  const row2 = w.addStack(); row2.addSpacer();
-  text(row2, 'bills', Font.systemFont(9), 0.8);
-  row2.addSpacer();
-  w.addSpacer();
-}
-
-function homeScreen(w, b, dt, family) {
-  // Bonus: also works as a small/medium Home Screen widget.
-  w.backgroundColor = new Color('#0b1120');
-  const t = text(w, '💷 Bills this month', Font.boldSystemFont(13)); t.textColor = new Color('#2dd4bf');
-  w.addSpacer(4);
-  const big = text(w, `${b.paid}/${b.count} paid`, Font.boldSystemFont(24)); big.textColor = Color.white();
-  const tot = text(w, money(b.total), Font.mediumSystemFont(13), 0.8); tot.textColor = Color.white();
-  w.addSpacer(6);
-  const groups = {};
-  for (const x of b.left) (groups[x.group || 'Other'] = groups[x.group || 'Other'] || []).push(x.name);
-  const lines = Object.entries(groups).map(([g, n]) => `${g}: ${n.join(', ')}`);
-  for (const l of (lines.length ? lines : ['All paid ✓']).slice(0, family === 'small' ? 2 : 3)) {
-    const lt = text(w, l, Font.systemFont(11), 0.85); lt.textColor = Color.white(); lt.lineLimit = 2;
+// ── Layouts ──────────────────────────────────────────────────
+function rectangular(w, d) {
+  text(w, `${wxLine(d.wx)} · ${tubeLine(d.tube)}`, Font.boldSystemFont(13));
+  if (!d.events) text(w, 'Calendar unavailable', Font.systemFont(12), 0.85);
+  else if (!d.events.length) text(w, 'No more appointments today', Font.systemFont(12), 0.85);
+  else {
+    d.events.slice(0, 2).forEach((e) => text(w, eventLine(e), Font.systemFont(12), 0.9));
+    if (d.events.length > 2) text(w, `+${d.events.length - 2} more today`, Font.systemFont(11), 0.7);
   }
-  if (dt) { w.addSpacer(4); const d = text(w, `🥋 Day ${dt.day} · ${dt.score}/${dt.max}`, Font.systemFont(11), 0.85); d.textColor = Color.white(); }
+}
+
+function circular(w, d) {
+  w.addAccessoryWidgetBackground = true;
+  w.addSpacer();
+  const r1 = w.addStack(); r1.addSpacer(); text(r1, d.wx ? d.wx.icon : '🌡️', Font.systemFont(16)); r1.addSpacer();
+  const r2 = w.addStack(); r2.addSpacer(); text(r2, d.wx ? `${d.wx.temp}°` : '–', Font.boldSystemFont(15)); r2.addSpacer();
+  w.addSpacer();
+}
+
+function inline(w, d) {
+  const bad = d.tube ? d.tube.filter((l) => !l.good).length : 0;
+  const ev = d.events ? (d.events.length ? `${d.events.length} today` : 'free day') : '';
+  text(w, `${wxLine(d.wx)} · ${d.tube ? (bad ? `⚠️ ${bad} line${bad > 1 ? 's' : ''}` : '🚇 ✓') : ''} · ${ev}`, Font.systemFont(12));
+}
+
+function homeScreen(w, d, family) {
+  w.backgroundColor = new Color('#0b1120');
+  const white = (t) => { t.textColor = Color.white(); return t; };
+  white(text(w, d.wx ? `${d.wx.icon} ${d.wx.temp}°  ${d.place}` : `🌡️ ${d.place}`, Font.boldSystemFont(15)));
+  if (d.wx) white(text(w, `↑${d.wx.max}° ↓${d.wx.min}° · ☔ ${d.wx.rain}%`, Font.systemFont(11), 0.75));
+  w.addSpacer(5);
+  if (d.tube) d.tube.forEach((l) => white(text(w, `${l.good ? '🟢' : '🟠'} ${l.name}: ${l.status}`, Font.systemFont(11), 0.9)));
+  else white(text(w, '🚇 TfL unavailable', Font.systemFont(11), 0.75));
+  w.addSpacer(5);
+  const max = family === 'small' ? 2 : family === 'large' ? 8 : 3;
+  if (!d.events) white(text(w, 'Calendar unavailable', Font.systemFont(11), 0.75));
+  else if (!d.events.length) white(text(w, 'No more appointments today', Font.systemFont(11), 0.75));
+  else d.events.slice(0, max).forEach((e) => white(text(w, eventLine(e), Font.systemFont(11), 0.95)));
 }
 
 async function build(family = config.widgetFamily || 'accessoryRectangular') {
   const w = new ListWidget();
-  w.url = `${SITE}/money`;
+  w.url = SITE;
   w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
-  const { data, error } = await loadData();
-  if (error) {
-    if (family.startsWith('accessory') || !config.runsInWidget) text(w, `💷 ${error}`, Font.systemFont(12));
-    else { w.backgroundColor = new Color('#0b1120'); const t = text(w, error, Font.systemFont(13)); t.textColor = Color.white(); }
+  const d = await loadAll();
+  if (d.error) {
+    if (!family.startsWith('accessory')) w.backgroundColor = new Color('#0b1120');
+    const t = text(w, d.error, Font.systemFont(12));
+    if (!family.startsWith('accessory')) t.textColor = Color.white();
     return w;
   }
-  const now = new Date();
-  const b = bills(data, now), dt = diet(data, now);
-  if (family === 'accessoryInline') text(w, `💷 ${b.paid}/${b.count} bills paid · ${b.left.length} left`, Font.systemFont(12));
-  else if (family === 'accessoryCircular') { w.addAccessoryWidgetBackground = true; circular(w, b); }
-  else if (family === 'accessoryRectangular') rectangular(w, b, dt);
-  else homeScreen(w, b, dt, family);
+  if (family === 'accessoryInline') inline(w, d);
+  else if (family === 'accessoryCircular') circular(w, d);
+  else if (family === 'accessoryRectangular') rectangular(w, d);
+  else homeScreen(w, d, family);
   return w;
 }
 
 // ── Run ──────────────────────────────────────────────────────
 if (!config.runsInWidget && !Keychain.contains(KEY)) await signIn();
-const widget = await build();
 if (config.runsInWidget) {
-  Script.setWidget(widget);
+  Script.setWidget(await build());
 } else {
   const menu = new Alert();
   menu.title = 'Preview';
@@ -192,9 +200,9 @@ if (config.runsInWidget) {
   menu.addDestructiveAction('Sign out');
   menu.addCancelAction('Done');
   const i = await menu.presentAlert();
-  if (i === 0) await widget.presentAccessoryRectangular();
+  if (i === 0) await (await build('accessoryRectangular')).presentAccessoryRectangular();
   if (i === 1) await (await build('accessoryCircular')).presentAccessoryCircular();
   if (i === 2) await (await build('medium')).presentMedium();
-  if (i === 3) { Keychain.remove(KEY); }
+  if (i === 3) Keychain.remove(KEY);
 }
 Script.complete();
