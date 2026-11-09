@@ -125,32 +125,34 @@ function row(w, symbol, left, right, bold) {
   if (symbol) icon(r, symbol, 12);
   const t = text(r, left, bold ? Font.boldSystemFont(14) : Font.semiboldSystemFont(14));
   t.lineLimit = 1;
-  if (right && right.icon) { r.addSpacer(); icon(r, right.icon, 13); }
-  else if (right) { r.addSpacer(); text(r, right, Font.boldSystemFont(13)); }
+  if (right) { r.addSpacer(); text(r, right, Font.boldSystemFont(13)); }
   return r;
 }
 
 function rectangular(w, d) {
   // Frosted backing (like Apple's own widgets) so it reads over any wallpaper.
+  // Lines evenly spaced and centred vertically.
   w.addAccessoryWidgetBackground = true;
-  w.setPadding(6, 10, 6, 10);
-  if (!d.tube) row(w, 'tram.fill', 'TfL unavailable', null, true);
+  w.setPadding(4, 10, 4, 10);
+  w.addSpacer();
+  if (!d.tube) row(w, null, 'TfL unavailable', null, true);
   else {
     const bad = d.tube.filter((l) => !l.good);
-    if (!bad.length) row(w, 'tram.fill', d.tube.map((l) => l.name).join(' · '), { icon: 'checkmark.circle.fill' }, true);
-    else row(w, 'exclamationmark.triangle.fill', bad.map((l) => l.name).join(' · '), bad[0].status.replace(' Service', ''), true);
+    if (!bad.length) row(w, null, d.tube.map((l) => l.name).join(' · '), 'Good', true);
+    else row(w, null, bad.map((l) => l.name).join(' · '), bad[0].status.replace(' Service', ''), true);
   }
-  w.addSpacer();
-  if (!d.events) row(w, 'calendar', 'Calendar unavailable');
-  else if (!d.events.length) row(w, 'calendar', 'Free for the rest of today');
+  const gap = () => w.addSpacer(3);
+  if (!d.events) { gap(); row(w, 'calendar', 'Calendar unavailable'); }
+  else if (!d.events.length) { gap(); row(w, 'checkmark', 'Free for the rest of today'); }
   else {
     d.events.slice(0, 2).forEach((e, i) => {
-      if (i) w.addSpacer(2);
+      gap();
       const more = i === 1 && d.events.length > 2 ? `+${d.events.length - 2}` : null;
-      row(w, e.allDay ? 'pin.fill' : 'clock', e.allDay ? e.title : `${e.time}  ${e.title}`, more);
+      row(w, e.allDay ? 'pin' : 'clock', e.allDay ? e.title : `${e.time}  ${e.title}`, more);
     });
-    if (d.events.length === 1) { w.addSpacer(2); row(w, 'checkmark', 'Nothing else today'); }
+    if (d.events.length === 1) { gap(); row(w, 'checkmark', 'Nothing else today'); }
   }
+  w.addSpacer();
 }
 
 function circular(w, d) {
