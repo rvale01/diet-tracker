@@ -3,12 +3,12 @@ import { BillRow } from '../components/BillsDue';
 import { Card, PageHead, Sheet } from '../components/ui';
 import { BILL_ICONS, groupBills, monthBills, OTHER_GROUP, paidTotal, parseMoney } from '../lib/bills';
 import { useCalendar } from '../lib/calendar';
+import { DEFAULT_CATEGORIES } from '../lib/categories';
 import { daysInMonth, fmtDay, money, pad, relDay, todayKey, uid } from '../lib/dates';
 import { useStore } from '../lib/store';
 import type { Bill, Expense } from '../lib/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-export const DEFAULT_CATEGORIES = ['🛒 Groceries', '🍽️ Eating out', '🚇 Transport', '🛍️ Shopping', '🎉 Fun', '💊 Health', '🎁 Gifts', '📦 Other'];
 
 function useMonth() {
   const now = new Date();

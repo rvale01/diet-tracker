@@ -17,6 +17,10 @@ A personal dashboard for the phone and a kitchen tablet: **Today**, **Money** (m
 
 Calendar links (Google "secret address in iCal format", iCloud public calendar links), TfL lines and stops, and the weather location are set in the app under **Settings**.
 
+## Claude connector
+
+`/api/mcp/<key>` is a small MCP server, so Claude can add to-dos, log spending and weigh-ins, and list or tick off to-dos when asked in a chat. Copy the link from **Settings → Claude** and add it in Claude as a custom connector with no authentication. The key comes from `DASHBOARD_PASSWORD`, so changing the password changes the link. Tools are in `server/connector.ts`.
+
 ## Run locally
 
 ```bash

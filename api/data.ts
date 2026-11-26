@@ -2,7 +2,8 @@
 //   { op: 'all' }                  -> { version, data }
 //   { op: 'version' }              -> { version }
 //   { op: 'write', writes: [...] } -> { version }
-import { unauthorized, verify } from '../server/auth.js';
+//   { op: 'connector' }            -> { key }  (for the Claude connector link, see api/mcp.ts)
+import { connectorKey, unauthorized, verify } from '../server/auth.js';
 import { isCollection, readAll, version, write, type Write } from '../server/store.js';
 
 export async function POST(req: Request): Promise<Response> {
@@ -12,6 +13,7 @@ export async function POST(req: Request): Promise<Response> {
     const headers = { 'cache-control': 'no-store' };
     if (body.op === 'all') return Response.json(await readAll(), { headers });
     if (body.op === 'version') return Response.json({ version: await version() }, { headers });
+    if (body.op === 'connector') return Response.json({ key: await connectorKey() }, { headers });
     if (body.op === 'write') {
       const writes: Write[] = Array.isArray(body.writes) ? body.writes : [];
       if (!writes.length || writes.length > 200) return Response.json({ error: 'Nothing to save.' }, { status: 400 });

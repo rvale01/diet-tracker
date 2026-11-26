@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, PageHead } from '../components/ui';
+import { api } from '../lib/api';
 import { clearCalendarCache, useCalendar } from '../lib/calendar';
 import { todayKey, uid } from '../lib/dates';
 import { useStore } from '../lib/store';
@@ -157,6 +158,42 @@ function WeatherSettings() {
   );
 }
 
+function ClaudeCard() {
+  const [key, setKey] = useState<string | null>(null);
+  const [err, setErr] = useState('');
+  const [copied, setCopied] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    api<{ key: string | null }>('/api/data', { body: { op: 'connector' } })
+      .then((r) => (r.key ? setKey(r.key) : setErr('Set DASHBOARD_PASSWORD in Vercel first.')))
+      .catch((e) => setErr(e instanceof Error ? e.message : 'Could not load the link.'));
+  }, []);
+  const url = key ? `${location.origin}/api/mcp/${key}` : '';
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); } catch { input.current?.select(); document.execCommand('copy'); }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Card title="Claude">
+      <div className="stack">
+        <div className="small muted">Connect Claude, then just ask it: “add call the bank to my to-dos for tomorrow”, “I spent £12 on lunch”, “log 64.2 kg”. It can also list and tick off to-dos.</div>
+        <div className="row">
+          <input ref={input} readOnly value={url || err || 'Loading…'} onFocus={(e) => e.target.select()} aria-label="Claude connector link" />
+          <button className="btn" disabled={!url} onClick={copy}>{copied ? 'Copied ✓' : 'Copy'}</button>
+        </div>
+        <details className="small">
+          <summary className="bold" style={{ cursor: 'pointer' }}>How do I connect it?</summary>
+          <div className="stack muted" style={{ marginTop: '0.6rem', gap: '0.5rem' }}>
+            <div>In Claude (claude.ai or the app): <b>Customize → Connectors</b> → add a <b>custom connector</b>. Name it “Dashboard”, paste the link, and choose no authentication.</div>
+            <div>Keep the link private: anyone who has it can add and tick off to-dos. Changing DASHBOARD_PASSWORD in Vercel gives a new link (and signs every device out).</div>
+          </div>
+        </details>
+      </div>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const { settings, saveSettings, signOut } = useStore();
   const [name, setName] = useState(settings.name ?? '');
@@ -189,6 +226,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </Card>
+      <div id="claude"><ClaudeCard /></div>
       <Card title="Account">
         <div className="stack">
           <div className="small muted">Everything syncs between your phone and the board. To change the password, change DASHBOARD_PASSWORD in Vercel; every device is then signed out.</div>
