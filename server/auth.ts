@@ -29,4 +29,17 @@ export async function verify(req: Request): Promise<boolean> {
   return token === 'v1.' + (await hmac(p, 'personal-dashboard-session'));
 }
 
+/** The secret part of the Claude connector link (/api/mcp/<key>). Changing the password changes it. */
+export async function connectorKey(): Promise<string | null> {
+  const p = password();
+  return p ? (await hmac(p, 'personal-dashboard-connector')).slice(0, 32) : null;
+}
+
+export async function verifyConnector(given: string | null): Promise<boolean> {
+  const k = await connectorKey();
+  if (!k || !given) return false;
+  const [a, b] = await Promise.all([hmac('cmp', given), hmac('cmp', k)]); // constant-length comparison
+  return a === b;
+}
+
 export const unauthorized = () => Response.json({ error: 'Please sign in again.' }, { status: 401 });

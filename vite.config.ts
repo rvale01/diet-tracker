@@ -4,13 +4,15 @@ import { defineConfig, type Connect, type Plugin } from 'vite';
 import { GET as calendar } from './api/calendar';
 import { POST as data } from './api/data';
 import { POST as login } from './api/login';
+import { POST as mcp } from './api/mcp';
 import { GET as tfl } from './api/tfl';
 
 /** Serve the Vercel /api functions locally too. Data is kept in memory; the password is "dev". */
 function localApi(): Plugin {
-  const routes: Record<string, (r: Request) => Promise<Response>> = { '/api/calendar': calendar, '/api/data': data, '/api/login': login, '/api/tfl': tfl };
+  const routes: Record<string, (r: Request) => Promise<Response>> = { '/api/calendar': calendar, '/api/data': data, '/api/login': login, '/api/mcp': mcp, '/api/tfl': tfl };
   const mw: Connect.NextHandleFunction = async (req, res, next) => {
-    const handler = routes[req.url?.split('?')[0] ?? ''];
+    const path = req.url?.split('?')[0] ?? '';
+    const handler = routes[path] ?? (path.startsWith('/api/mcp/') ? mcp : undefined);
     if (!handler) return next();
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);

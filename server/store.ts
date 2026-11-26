@@ -25,6 +25,14 @@ export async function readAll() {
   return { version: await version(), data };
 }
 
+export async function readCollection<T = any>(col: Collection): Promise<Record<string, T>> {
+  const out: Record<string, T> = {};
+  for (const [id, json] of Object.entries(await getKv().hgetall(`pd:${col}`))) {
+    try { out[id] = JSON.parse(json); } catch { /* skip a broken row */ }
+  }
+  return out;
+}
+
 export interface Write { col: Collection; id: string; value?: unknown }
 
 /** Apply writes (value undefined or null = delete). Returns the new version. */
